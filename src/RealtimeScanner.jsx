@@ -39,41 +39,41 @@ import {
  * Real-time Scanner Component
  * Enables automatic scanning with web and Telegram alerts
  */
-export default function RealtimeScanner({ 
-  API_BASE_URL, 
-  selectedStrategy, 
+export default function RealtimeScanner({
+  API_BASE_URL,
+  selectedStrategy,
   selectedStockList,
-  strategies 
+  strategies,
 }) {
   const [isActive, setIsActive] = useState(false);
   const [scanMode, setScanMode] = useState("auto_interval");
   const [intervalSeconds, setIntervalSeconds] = useState(300); // 5 minutes
   const [alertCooldown, setAlertCooldown] = useState(1800); // 30 minutes
-  
+
   const [activeScans, setActiveScans] = useState([]);
   const [recentMatches, setRecentMatches] = useState([]);
   const [stats, setStats] = useState({});
-  
+
   const [wsConnected, setWsConnected] = useState(false);
   const [telegramEnabled, setTelegramEnabled] = useState(false);
   const [alerts, setAlerts] = useState([]);
-  
+
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  
+
   const wsRef = useRef(null);
   const audioRef = useRef(null);
 
   // WebSocket connection
   useEffect(() => {
     connectWebSocket();
-    
+
     // Fetch initial state
     fetchActiveScans();
     fetchStats();
     fetchRecentMatches();
     testTelegram();
-    
+
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
@@ -88,7 +88,7 @@ export default function RealtimeScanner({
       fetchStats();
       fetchRecentMatches();
     }, 10000); // Every 10 seconds
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -136,12 +136,12 @@ export default function RealtimeScanner({
         // New alert received!
         handleNewAlert(data);
         break;
-        
+
       case "scan_complete":
         console.log("Scan complete:", data);
         fetchStats();
         break;
-        
+
       default:
         console.log("Unknown message type:", data);
     }
@@ -150,7 +150,7 @@ export default function RealtimeScanner({
   const handleNewAlert = (alert) => {
     // Add to alerts list
     setAlerts((prev) => [alert, ...prev].slice(0, 50));
-    
+
     // Show browser notification
     if ("Notification" in window && Notification.permission === "granted") {
       new Notification(`🚨 ${alert.signal_type} Signal`, {
@@ -158,12 +158,14 @@ export default function RealtimeScanner({
         icon: "/logo.png",
       });
     }
-    
+
     // Play sound
     if (audioRef.current) {
-      audioRef.current.play().catch((e) => console.error("Audio play error:", e));
+      audioRef.current
+        .play()
+        .catch((e) => console.error("Audio play error:", e));
     }
-    
+
     // Fetch updated data
     fetchRecentMatches();
     fetchStats();
@@ -175,11 +177,11 @@ export default function RealtimeScanner({
       const data = await res.json();
       if (data.success) {
         setActiveScans(data.active_scans);
-        
+
         // Check if current strategy is active
         const scanId = `${selectedStrategy}_${selectedStockList}`;
         const isRunning = data.active_scans.some(
-          (s) => s.scan_id === scanId && s.is_running
+          (s) => s.scan_id === scanId && s.is_running,
         );
         setIsActive(isRunning);
       }
@@ -203,7 +205,7 @@ export default function RealtimeScanner({
   const fetchRecentMatches = async () => {
     try {
       const res = await fetch(
-        `${API_BASE_URL}/api/realtime/recent-matches?limit=20&strategy=${selectedStrategy || ""}`
+        `${API_BASE_URL}/api/realtime/recent-matches?limit=20&strategy=${selectedStrategy || ""}`,
       );
       const data = await res.json();
       if (data.success) {
@@ -229,7 +231,7 @@ export default function RealtimeScanner({
   const startScan = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const res = await fetch(
         `${API_BASE_URL}/api/realtime/start?` +
@@ -238,17 +240,17 @@ export default function RealtimeScanner({
           `scan_mode=${scanMode}&` +
           `interval_seconds=${intervalSeconds}&` +
           `alert_cooldown=${alertCooldown}`,
-        { method: "POST" }
+        { method: "POST" },
       );
-      
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         setIsActive(true);
         fetchActiveScans();
-        
+
         // Request notification permission
         if ("Notification" in window && Notification.permission === "default") {
           Notification.requestPermission();
@@ -264,18 +266,17 @@ export default function RealtimeScanner({
   const stopScan = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const scanId = `${selectedStrategy}_${selectedStockList}`;
-      const res = await fetch(
-        `${API_BASE_URL}/api/realtime/stop/${scanId}`,
-        { method: "POST" }
-      );
-      
+      const res = await fetch(`${API_BASE_URL}/api/realtime/stop/${scanId}`, {
+        method: "POST",
+      });
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         setIsActive(false);
         fetchActiveScans();
@@ -307,7 +308,14 @@ export default function RealtimeScanner({
       {/* Header */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Box
                 sx={{
@@ -327,9 +335,11 @@ export default function RealtimeScanner({
                   },
                 }}
               >
-                <SignalIcon sx={{ color: isActive ? "#001a14" : "#64748b", fontSize: 20 }} />
+                <SignalIcon
+                  sx={{ color: isActive ? "#001a14" : "#64748b", fontSize: 20 }}
+                />
               </Box>
-              
+
               <Box>
                 <Typography
                   sx={{
@@ -355,24 +365,40 @@ export default function RealtimeScanner({
 
             <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
               {/* WebSocket status */}
-              <Tooltip title={wsConnected ? "WebSocket Connected" : "WebSocket Disconnected"}>
+              <Tooltip
+                title={
+                  wsConnected ? "WebSocket Connected" : "WebSocket Disconnected"
+                }
+              >
                 <Chip
                   size="small"
                   label={wsConnected ? "LIVE" : "OFFLINE"}
                   color={wsConnected ? "success" : "error"}
                   icon={wsConnected ? <CheckIcon /> : <CancelIcon />}
-                  sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: "0.65rem" }}
+                  sx={{
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: "0.65rem",
+                  }}
                 />
               </Tooltip>
 
               {/* Telegram status */}
-              <Tooltip title={telegramEnabled ? "Telegram Alerts Enabled" : "Telegram Not Configured"}>
+              <Tooltip
+                title={
+                  telegramEnabled
+                    ? "Telegram Alerts Enabled"
+                    : "Telegram Not Configured"
+                }
+              >
                 <Chip
                   size="small"
                   label={telegramEnabled ? "TELEGRAM" : "NO TELEGRAM"}
                   color={telegramEnabled ? "primary" : "default"}
                   icon={<TelegramIcon />}
-                  sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: "0.65rem" }}
+                  sx={{
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: "0.65rem",
+                  }}
                 />
               </Tooltip>
 
@@ -392,7 +418,9 @@ export default function RealtimeScanner({
                   <Switch
                     checked={scanMode === "auto_continuous"}
                     onChange={(e) =>
-                      setScanMode(e.target.checked ? "auto_continuous" : "auto_interval")
+                      setScanMode(
+                        e.target.checked ? "auto_continuous" : "auto_interval",
+                      )
                     }
                     disabled={isActive}
                   />
@@ -418,7 +446,9 @@ export default function RealtimeScanner({
                   type="number"
                   label="Scan Interval (seconds)"
                   value={intervalSeconds}
-                  onChange={(e) => setIntervalSeconds(parseInt(e.target.value) || 300)}
+                  onChange={(e) =>
+                    setIntervalSeconds(parseInt(e.target.value) || 300)
+                  }
                   disabled={isActive}
                   helperText="How often to scan (min: 60s)"
                   InputProps={{ inputProps: { min: 60, step: 60 } }}
@@ -433,7 +463,9 @@ export default function RealtimeScanner({
                 type="number"
                 label="Alert Cooldown (seconds)"
                 value={alertCooldown}
-                onChange={(e) => setAlertCooldown(parseInt(e.target.value) || 1800)}
+                onChange={(e) =>
+                  setAlertCooldown(parseInt(e.target.value) || 1800)
+                }
                 disabled={isActive}
                 helperText="Min time between alerts per symbol"
                 InputProps={{ inputProps: { min: 300, step: 300 } }}
@@ -491,7 +523,9 @@ export default function RealtimeScanner({
         <Grid item xs={6} sm={3}>
           <Card>
             <CardContent sx={{ textAlign: "center" }}>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748b", mb: 0.5 }}>
+              <Typography
+                sx={{ fontSize: "0.7rem", color: "#64748b", mb: 0.5 }}
+              >
                 TOTAL SCANS
               </Typography>
               <Typography
@@ -511,7 +545,9 @@ export default function RealtimeScanner({
         <Grid item xs={6} sm={3}>
           <Card>
             <CardContent sx={{ textAlign: "center" }}>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748b", mb: 0.5 }}>
+              <Typography
+                sx={{ fontSize: "0.7rem", color: "#64748b", mb: 0.5 }}
+              >
                 MATCHES
               </Typography>
               <Typography
@@ -531,7 +567,9 @@ export default function RealtimeScanner({
         <Grid item xs={6} sm={3}>
           <Card>
             <CardContent sx={{ textAlign: "center" }}>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748b", mb: 0.5 }}>
+              <Typography
+                sx={{ fontSize: "0.7rem", color: "#64748b", mb: 0.5 }}
+              >
                 ALERTS SENT
               </Typography>
               <Typography
@@ -551,7 +589,9 @@ export default function RealtimeScanner({
         <Grid item xs={6} sm={3}>
           <Card>
             <CardContent sx={{ textAlign: "center" }}>
-              <Typography sx={{ fontSize: "0.7rem", color: "#64748b", mb: 0.5 }}>
+              <Typography
+                sx={{ fontSize: "0.7rem", color: "#64748b", mb: 0.5 }}
+              >
                 ACTIVE SCANS
               </Typography>
               <Typography
@@ -610,17 +650,27 @@ export default function RealtimeScanner({
                     border: `1px solid ${alert.signal_type === "LONG" ? "#00e67622" : "#ff174422"}`,
                   }}
                 >
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
                     <Box>
                       <Typography
                         sx={{
                           fontFamily: '"JetBrains Mono", monospace',
                           fontWeight: 700,
                           fontSize: "0.85rem",
-                          color: alert.signal_type === "LONG" ? "#00e676" : "#ff4444",
+                          color:
+                            alert.signal_type === "LONG"
+                              ? "#00e676"
+                              : "#ff4444",
                         }}
                       >
-                        {alert.signal_type === "LONG" ? "🟢" : "🔴"} {alert.symbol}
+                        {alert.signal_type === "LONG" ? "🟢" : "🔴"}{" "}
+                        {alert.symbol}
                       </Typography>
                       <Typography sx={{ fontSize: "0.7rem", color: "#64748b" }}>
                         {alert.strategy} • ₹{alert.values?.close}
@@ -672,7 +722,10 @@ export default function RealtimeScanner({
               <TableBody>
                 {recentMatches.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} sx={{ textAlign: "center", py: 4, color: "#64748b" }}>
+                    <TableCell
+                      colSpan={5}
+                      sx={{ textAlign: "center", py: 4, color: "#64748b" }}
+                    >
                       No recent matches
                     </TableCell>
                   </TableRow>
@@ -705,7 +758,9 @@ export default function RealtimeScanner({
                         <Chip
                           label={match.signal_type}
                           size="small"
-                          color={match.signal_type === "LONG" ? "success" : "error"}
+                          color={
+                            match.signal_type === "LONG" ? "success" : "error"
+                          }
                           sx={{
                             fontFamily: '"JetBrains Mono", monospace',
                             fontSize: "0.65rem",
@@ -724,7 +779,9 @@ export default function RealtimeScanner({
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography sx={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+                        <Typography
+                          sx={{ fontSize: "0.7rem", color: "#94a3b8" }}
+                        >
                           {match.message}
                         </Typography>
                       </TableCell>
