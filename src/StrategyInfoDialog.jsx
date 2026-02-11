@@ -175,11 +175,11 @@ export default function StrategyInfoDialog({
                 mainTab === 0
                   ? "Live Scanner"
                   : mainTab === 1
-                    ? "1:1 R:R Backtest"
+                    ? "1:3 R:R Backtest"
                     : "Auto-Scan + Alerts",
               ],
               ["Max Hold Time", "50 candles (~4 hours)"],
-              ["Risk:Reward", "1:1 (equal stop & target)"],
+              ["Risk:Reward", "1:3 (equal stop & target)"],
             ].map(([label, value]) => (
               <Box
                 key={label}

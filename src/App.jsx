@@ -773,7 +773,7 @@ export default function App() {
                 <ListItemIcon>
                   <TimelineIcon />
                 </ListItemIcon>
-                <ListItemText primary="Backtest 1:1" />
+                <ListItemText primary="Backtest 1:3" />
               </ListItem>
               <ListItem
                 button
@@ -970,7 +970,7 @@ export default function App() {
               <Tab
                 icon={<TimelineIcon sx={{ fontSize: isMobile ? 16 : 18 }} />}
                 iconPosition="start"
-                label={isMobile ? "TEST" : "BACKTEST 1:1"}
+                label={isMobile ? "TEST" : "BACKTEST 1:3"}
               />
               <Tab
                 icon={

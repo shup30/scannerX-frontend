@@ -123,10 +123,7 @@ export default function BacktestPanel({ backtestResults }) {
               }}
             >
               <CardContent sx={{ p: isMobile ? 2 : 2.5 }}>
-                <MonoLabel
-                  color={theme.palette.text.disabled}
-                  size="0.7rem"
-                >
+                <MonoLabel color={theme.palette.text.disabled} size="0.7rem">
                   {label}
                 </MonoLabel>
                 <Typography
@@ -156,7 +153,7 @@ export default function BacktestPanel({ backtestResults }) {
         <CardContent sx={{ p: 0 }}>
           <Box sx={{ px: isMobile ? 2 : 2.5, pt: 2, pb: 1.5 }}>
             <MonoLabel color={theme.palette.text.disabled}>
-              Stock-wise Results · 1:1 Risk-Reward
+              Stock-wise Results · 1:3 Risk-Reward
             </MonoLabel>
           </Box>
           <TableContainer>
@@ -180,9 +177,7 @@ export default function BacktestPanel({ backtestResults }) {
                   <TableCell align="right">
                     {isMobile ? "P&L" : "Total P&L"}
                   </TableCell>
-                  {!isMobile && (
-                    <TableCell align="right">Avg P&L</TableCell>
-                  )}
+                  {!isMobile && <TableCell align="right">Avg P&L</TableCell>}
                   <TableCell width={40} />
                 </TableRow>
               </TableHead>
@@ -373,7 +368,7 @@ export default function BacktestPanel({ backtestResults }) {
                                 size="0.68rem"
                                 spacing="0.08em"
                               >
-                                Trade History · 1:1 RR
+                                Trade History · 1:3 RR
                               </MonoLabel>
                               <TableContainer sx={{ mt: 1.5 }}>
                                 <Table size="small">
@@ -416,12 +411,10 @@ export default function BacktestPanel({ backtestResults }) {
                                               fontFamily:
                                                 '"JetBrains Mono", monospace',
                                               fontSize: "0.7rem",
-                                              color:
-                                                theme.palette.text.primary,
+                                              color: theme.palette.text.primary,
                                             }}
                                           >
-                                            ₹
-                                            {trade.entry_price?.toFixed(2)}
+                                            ₹{trade.entry_price?.toFixed(2)}
                                           </Typography>
                                           {isMobile && (
                                             <Typography
