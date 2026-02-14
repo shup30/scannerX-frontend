@@ -178,7 +178,7 @@ export default function App() {
   const [backtestResults, setBacktestResults] = useState(null);
   const [error, setError] = useState(null);
   const [serverStatus, setServerStatus] = useState(null);
-  const [selectedStrategy, setSelectedStrategy] = useState(null);
+  const [selectedStrategies, setSelectedStrategies] = useState([]);
   const [selectedStockList, setSelectedStockList] = useState("nifty_50");
   const [backtestDays, setBacktestDays] = useState(7);
   const [intradayDays, setIntradayDays] = useState(7);
@@ -198,6 +198,38 @@ export default function App() {
   const [alertCount, setAlertCount] = useState(0);
   const wsRef = useRef(null);
   const alertTimerRef = useRef(null);
+
+  // Auto-Scan status (lifted from RealtimePanel)
+  const [autoscans, setAutoscans] = useState([]);
+  const [autoscanStats, setAutoscanStats] = useState({});
+  const [telegramStatus, setTelegramStatus] = useState({
+    enabled: false,
+    checked: false,
+  });
+  const statusTimerRef = useRef(null);
+
+  const fetchAutoscanStatus = async () => {
+    try {
+      const r = await fetch(`${API_BASE_URL}/api/autoscan/status`);
+      if (!r.ok) throw new Error("Status failed");
+      const d = await r.json();
+      if (d.success) {
+        setAutoscans(d.scans || []);
+        setAutoscanStats(d.stats || {});
+        setTelegramStatus({ enabled: d.telegram_enabled, checked: true });
+      }
+    } catch (e) {
+      console.error("Autoscan status error:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchAutoscanStatus();
+    statusTimerRef.current = setInterval(fetchAutoscanStatus, 3000);
+    return () => {
+      if (statusTimerRef.current) clearInterval(statusTimerRef.current);
+    };
+  }, []);
 
   const theme = useMemo(() => getTheme(mode), [mode]);
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -292,8 +324,10 @@ export default function App() {
             };
         }
         setStrategies(t);
-        if (!selectedStrategy || !t[selectedStrategy])
-          setSelectedStrategy(Object.keys(t)[0] || null);
+        if (selectedStrategies.length === 0) {
+          const first = Object.keys(t)[0];
+          if (first) setSelectedStrategies([first]);
+        }
       } else throw new Error("Invalid response");
     } catch (err) {
       setStrategiesError(err.message);
@@ -314,7 +348,7 @@ export default function App() {
           category: "intraday",
         },
       });
-      setSelectedStrategy("intraday-momentum-breakout");
+      setSelectedStrategies(["intraday-momentum-breakout"]);
     } finally {
       setLoadingStrategies(false);
     }
@@ -330,6 +364,7 @@ export default function App() {
   };
 
   const runScan = async () => {
+    const selectedStrategy = selectedStrategies[0];
     if (!selectedStrategy) return;
     setScanning(true);
     setError(null);
@@ -351,6 +386,7 @@ export default function App() {
   };
 
   const runBacktest = async () => {
+    const selectedStrategy = selectedStrategies[0];
     if (!selectedStrategy) return;
     setBacktesting(true);
     setError(null);
@@ -570,7 +606,7 @@ export default function App() {
                       border: "1px solid rgba(255,171,0,0.3)",
                     }}
                   >
-                    <NotificationsActive
+                    <NotificationsActiveIcon
                       sx={{ fontSize: 14, color: "#ffab00" }}
                     />
                   </Box>
@@ -994,9 +1030,8 @@ export default function App() {
             </Tabs>
           </Card>
 
-          {/* ── Strategy Selection (for scanner & backtest) ── */}
-          {mainTab !== 2 && (
-            <Card sx={{ mb: 3 }}>
+          {/* ── Strategy Selection ── */}
+          <Card sx={{ mb: 3 }}>
               <CardContent sx={{ p: isMobile ? 2 : 2.5 }}>
                 {/* Header */}
                 <Box
@@ -1103,8 +1138,23 @@ export default function App() {
                       <EnhancedStrategyCard
                         stratKey={key}
                         strategy={strategy}
-                        selected={selectedStrategy === key}
-                        onClick={() => setSelectedStrategy(key)}
+                        selected={selectedStrategies.includes(key)}
+                        isRunning={autoscans.some(
+                          (t) => t.strategy === key && t.is_running,
+                        )}
+                        onClick={() => {
+                          if (mainTab === 2) {
+                            // Multi-select for Auto-Scan
+                            setSelectedStrategies((prev) =>
+                              prev.includes(key)
+                                ? prev.filter((k) => k !== key)
+                                : [...prev, key],
+                            );
+                          } else {
+                            // Single-select for Scan/Backtest
+                            setSelectedStrategies([key]);
+                          }
+                        }}
                         getIcon={getIcon}
                       />
                     </Grid>
@@ -1227,118 +1277,123 @@ export default function App() {
                     </Grid>
                   )}
 
-                  <Grid item xs={12} md={4}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        gap: 1,
-                        height: "100%",
-                        alignItems: "center",
-                      }}
-                    >
-                      {mainTab === 0 ? (
-                        <Button
-                          fullWidth
-                          variant="contained"
-                          onClick={runScan}
-                          disabled={
-                            scanning || !isServerHealthy || !selectedStrategy
-                          }
-                          startIcon={
-                            scanning ? (
-                              <CircularProgress
-                                size={14}
-                                sx={{ color: "inherit" }}
-                              />
-                            ) : (
-                              <PlayArrowIcon />
-                            )
-                          }
-                          sx={{
-                            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                            color: theme.palette.primary.contrastText,
-                            fontWeight: 700,
-                            fontSize: isMobile ? "0.7rem" : "0.75rem",
-                            py: isMobile ? 0.8 : 1,
-                            boxShadow: `0 4px 16px ${theme.palette.primary.main}35`,
-                            "&:hover": {
-                              background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-                              boxShadow: `0 6px 24px ${theme.palette.primary.main}45`,
-                            },
-                            "&:disabled": { opacity: 0.4 },
-                          }}
-                        >
-                          {scanning ? "SCANNING..." : "RUN SCAN"}
-                        </Button>
-                      ) : (
-                        <Button
-                          fullWidth
-                          variant="contained"
-                          onClick={runBacktest}
-                          disabled={
-                            backtesting || !isServerHealthy || !selectedStrategy
-                          }
-                          startIcon={
-                            backtesting ? (
-                              <CircularProgress
-                                size={14}
-                                sx={{ color: "inherit" }}
-                              />
-                            ) : (
-                              <TimelineIcon />
-                            )
-                          }
-                          sx={{
-                            background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${theme.palette.secondary.dark})`,
-                            color: "#fff",
-                            fontWeight: 700,
-                            fontSize: isMobile ? "0.7rem" : "0.75rem",
-                            py: isMobile ? 0.8 : 1,
-                            boxShadow: `0 4px 16px ${theme.palette.secondary.main}35`,
-                            "&:hover": {
-                              background: `linear-gradient(135deg, ${theme.palette.secondary.dark}, ${theme.palette.secondary.main})`,
-                              boxShadow: `0 6px 24px ${theme.palette.secondary.main}45`,
-                            },
-                            "&:disabled": { opacity: 0.4 },
-                          }}
-                        >
-                          {backtesting
-                            ? "RUNNING..."
-                            : `BACKTEST ${backtestDays}D`}
-                        </Button>
-                      )}
-                      <Tooltip title="Strategy details">
-                        <IconButton
-                          size="small"
-                          onClick={() => setStrategyInfoOpen(true)}
-                          disabled={!selectedStrategy}
-                          sx={{
-                            color: theme.palette.text.disabled,
-                            border: `1px solid ${theme.palette.divider}`,
-                            borderRadius: 2,
-                            p: isMobile ? 0.7 : 0.9,
-                            "&:hover": {
-                              color: theme.palette.primary.main,
-                              borderColor: `${theme.palette.primary.main}40`,
-                              background: `${theme.palette.primary.main}08`,
-                            },
-                          }}
-                        >
-                          <InfoIcon sx={{ fontSize: isMobile ? 16 : 18 }} />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </Grid>
+                  {mainTab !== 2 && (
+                    <Grid item xs={12} md={4}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 1,
+                          height: "100%",
+                          alignItems: "center",
+                        }}
+                      >
+                        {mainTab === 0 ? (
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            onClick={runScan}
+                            disabled={
+                              scanning ||
+                              !isServerHealthy ||
+                              selectedStrategies.length === 0
+                            }
+                            startIcon={
+                              scanning ? (
+                                <CircularProgress
+                                  size={14}
+                                  sx={{ color: "inherit" }}
+                                />
+                              ) : (
+                                <PlayArrowIcon />
+                              )
+                            }
+                            sx={{
+                              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                              color: theme.palette.primary.contrastText,
+                              fontWeight: 700,
+                              fontSize: isMobile ? "0.7rem" : "0.75rem",
+                              py: isMobile ? 0.8 : 1,
+                              boxShadow: `0 4px 16px ${theme.palette.primary.main}35`,
+                              "&:hover": {
+                                background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+                                boxShadow: `0 6px 24px ${theme.palette.primary.main}45`,
+                              },
+                              "&:disabled": { opacity: 0.4 },
+                            }}
+                          >
+                            {scanning ? "SCANNING..." : "RUN SCAN"}
+                          </Button>
+                        ) : (
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            onClick={runBacktest}
+                            disabled={
+                              backtesting ||
+                              !isServerHealthy ||
+                              selectedStrategies.length === 0
+                            }
+                            startIcon={
+                              backtesting ? (
+                                <CircularProgress
+                                  size={14}
+                                  sx={{ color: "inherit" }}
+                                />
+                              ) : (
+                                <TimelineIcon />
+                              )
+                            }
+                            sx={{
+                              background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${theme.palette.secondary.dark})`,
+                              color: "#fff",
+                              fontWeight: 700,
+                              fontSize: isMobile ? "0.7rem" : "0.75rem",
+                              py: isMobile ? 0.8 : 1,
+                              boxShadow: `0 4px 16px ${theme.palette.secondary.main}35`,
+                              "&:hover": {
+                                background: `linear-gradient(135deg, ${theme.palette.secondary.dark}, ${theme.palette.secondary.main})`,
+                                boxShadow: `0 6px 24px ${theme.palette.secondary.main}45`,
+                              },
+                              "&:disabled": { opacity: 0.4 },
+                            }}
+                          >
+                            {backtesting
+                              ? "RUNNING..."
+                              : `BACKTEST ${backtestDays}D`}
+                          </Button>
+                        )}
+                        <Tooltip title="Strategy details">
+                          <IconButton
+                            size="small"
+                            disabled={selectedStrategies.length === 0}
+                            onClick={() => setStrategyInfoOpen(true)}
+                            sx={{
+                              color: theme.palette.text.disabled,
+                              border: `1px solid ${theme.palette.divider}`,
+                              borderRadius: 2,
+                              p: isMobile ? 0.7 : 0.9,
+                              "&:hover": {
+                                color: theme.palette.primary.main,
+                                borderColor: `${theme.palette.primary.main}40`,
+                                background: `${theme.palette.primary.main}08`,
+                              },
+                            }}
+                          >
+                            <InfoIcon sx={{ fontSize: isMobile ? 16 : 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Grid>
+                  )}
                 </Grid>
               </CardContent>
             </Card>
-          )}
 
           {/* ── Tab Content ── */}
           {mainTab === 0 && (
             <ScanResultsPanel
               scanResults={scanResults}
-              selectedStrategy={selectedStrategy}
+              selectedStrategy={selectedStrategies[0]}
               strategies={strategies}
               lastScanned={lastScanned}
               intradayDays={intradayDays}
@@ -1347,10 +1402,15 @@ export default function App() {
           {mainTab === 1 && <BacktestPanel backtestResults={backtestResults} />}
           {mainTab === 2 && (
             <RealtimePanel
-              selectedStrategy={selectedStrategy}
+              selectedStrategies={selectedStrategies}
               selectedStockList={selectedStockList}
               strategies={strategies}
               wsConnected={wsConnected}
+              autoscans={autoscans}
+              stats={autoscanStats}
+              telegramStatus={telegramStatus}
+              setTelegramStatus={setTelegramStatus}
+              onRefreshStatus={fetchAutoscanStatus}
               onNewAlert={(a) => {
                 setLiveAlert(a);
                 setAlertCount((c) => c + 1);
@@ -1363,8 +1423,10 @@ export default function App() {
         <StrategyInfoDialog
           open={strategyInfoOpen}
           onClose={() => setStrategyInfoOpen(false)}
-          stratKey={selectedStrategy}
-          strategy={selectedStrategy ? strategies[selectedStrategy] : null}
+          stratKey={selectedStrategies[0]}
+          strategy={
+            selectedStrategies[0] ? strategies[selectedStrategies[0]] : null
+          }
           intradayDays={intradayDays}
           mainTab={mainTab}
           getIcon={getIcon}

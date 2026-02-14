@@ -271,6 +271,7 @@ export function EnhancedStrategyCard({
   stratKey,
   strategy,
   selected,
+  isRunning,
   onClick,
   getIcon,
 }) {
@@ -286,84 +287,100 @@ export function EnhancedStrategyCard({
   return (
     <Tooltip
       title={
-        hasBacktestData ? (
-          <Box sx={{ p: 1 }}>
+        <Box>
+          {isRunning && (
             <Typography
               sx={{
-                fontFamily: '"JetBrains Mono", monospace',
-                fontSize: "0.7rem",
+                fontSize: "0.65rem",
+                color: theme.palette.success.main,
                 fontWeight: 700,
-                mb: 0.8,
-                color: "#fff",
+                mb: 0.5,
               }}
             >
-              📊 Last Backtest Results
+              ● ACTIVE AUTO-SCAN
             </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography sx={{ fontSize: "0.68rem", color: "#cbd5e0" }}>
-                  Win Rate:
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: "0.68rem",
-                    fontWeight: 700,
-                    color:
-                      backtestData.aggregate.overall_win_rate >= 50
-                        ? "#00e676"
-                        : "#ff4444",
-                  }}
-                >
-                  {backtestData.aggregate.overall_win_rate}%
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography sx={{ fontSize: "0.68rem", color: "#cbd5e0" }}>
-                  Avg P&L:
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: "0.68rem",
-                    fontWeight: 700,
-                    color:
-                      backtestData.aggregate.avg_pnl_per_trade >= 0
-                        ? "#00e676"
-                        : "#ff4444",
-                  }}
-                >
-                  {backtestData.aggregate.avg_pnl_per_trade >= 0 ? "+" : ""}
-                  {backtestData.aggregate.avg_pnl_per_trade}%
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography sx={{ fontSize: "0.68rem", color: "#cbd5e0" }}>
-                  Total Trades:
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: "0.68rem",
-                    fontWeight: 700,
-                    color: "#00d4aa",
-                  }}
-                >
-                  {backtestData.aggregate.total_trades}
-                </Typography>
-              </Box>
+          )}
+          {hasBacktestData ? (
+            <Box sx={{ p: 1 }}>
               <Typography
                 sx={{
-                  fontSize: "0.6rem",
-                  color: "#64748b",
-                  mt: 0.3,
-                  fontStyle: "italic",
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: "0.7rem",
+                  fontWeight: 700,
+                  mb: 0.8,
+                  color: "#fff",
                 }}
               >
-                {formatTimeAgo(backtestData.timestamp)}
+                📊 Last Backtest Results
               </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography sx={{ fontSize: "0.68rem", color: "#cbd5e0" }}>
+                    Win Rate:
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "0.68rem",
+                      fontWeight: 700,
+                      color:
+                        backtestData.aggregate.overall_win_rate >= 50
+                          ? "#00e676"
+                          : "#ff4444",
+                    }}
+                  >
+                    {backtestData.aggregate.overall_win_rate}%
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography sx={{ fontSize: "0.68rem", color: "#cbd5e0" }}>
+                    Avg P&L:
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "0.68rem",
+                      fontWeight: 700,
+                      color:
+                        backtestData.aggregate.avg_pnl_per_trade >= 0
+                          ? "#00e676"
+                          : "#ff4444",
+                    }}
+                  >
+                    {backtestData.aggregate.avg_pnl_per_trade >= 0 ? "+" : ""}
+                    {backtestData.aggregate.avg_pnl_per_trade}%
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography sx={{ fontSize: "0.68rem", color: "#cbd5e0" }}>
+                    Total Trades:
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "0.68rem",
+                      fontWeight: 700,
+                      color: "#00d4aa",
+                    }}
+                  >
+                    {backtestData.aggregate.total_trades}
+                  </Typography>
+                </Box>
+                <Typography
+                  sx={{
+                    fontSize: "0.6rem",
+                    color: "#64748b",
+                    mt: 0.3,
+                    fontStyle: "italic",
+                  }}
+                >
+                  {formatTimeAgo(backtestData.timestamp)}
+                </Typography>
+              </Box>
             </Box>
-          </Box>
-        ) : (
-          ""
-        )
+          ) : isRunning ? (
+            ""
+          ) : (
+            ""
+          )}
+        </Box>
       }
       placement="top"
       arrow
@@ -374,22 +391,29 @@ export function EnhancedStrategyCard({
         onClick={onClick}
         sx={{
           cursor: "pointer",
-          border: `2px solid ${selected ? `${ac}90` : "transparent"}`,
-          background: selected
-            ? isShort
-              ? `linear-gradient(135deg, rgba(255,23,68,0.08), rgba(255,23,68,0.04))`
-              : `linear-gradient(135deg, rgba(0,212,170,0.08), rgba(0,212,170,0.04))`
-            : theme.palette.background.paper,
+          border: `2px solid ${isRunning ? theme.palette.success.main : selected ? `${ac}90` : "transparent"}`,
+          background: isRunning
+            ? `linear-gradient(135deg, ${theme.palette.success.main}12, ${theme.palette.success.main}08)`
+            : selected
+              ? isShort
+                ? `linear-gradient(135deg, rgba(255,23,68,0.08), rgba(255,23,68,0.04))`
+                : `linear-gradient(135deg, rgba(0,212,170,0.08), rgba(0,212,170,0.04))`
+              : theme.palette.background.paper,
           transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           position: "relative",
           overflow: "hidden",
           height: "100%",
+          boxShadow: isRunning
+            ? `0 8px 32px ${theme.palette.success.main}15`
+            : "none",
           "&:hover": {
-            borderColor: `${ac}70`,
+            borderColor: isRunning ? theme.palette.success.main : `${ac}70`,
             transform: "translateY(-4px) scale(1.02)",
-            boxShadow: `0 12px 40px ${ac}25`,
+            boxShadow: isRunning
+              ? `0 14px 44px ${theme.palette.success.main}25`
+              : `0 12px 40px ${ac}25`,
           },
-          "&::before": selected
+          "&::before": isRunning || selected
             ? {
                 content: '""',
                 position: "absolute",
@@ -397,7 +421,10 @@ export function EnhancedStrategyCard({
                 left: 0,
                 right: 0,
                 height: "3px",
-                background: CATEGORY_META[strategy.category]?.gradient || ac,
+                background: isRunning
+                  ? theme.palette.success.main
+                  : CATEGORY_META[strategy.category]?.gradient || ac,
+                zIndex: 2,
               }
             : {},
         }}
@@ -417,16 +444,37 @@ export function EnhancedStrategyCard({
                   width: 36,
                   height: 36,
                   borderRadius: 2,
-                  background: `${ac}18`,
-                  border: `1.5px solid ${ac}35`,
+                  background: isRunning ? `${theme.palette.success.main}18` : `${ac}18`,
+                  border: `1.5px solid ${isRunning ? theme.palette.success.main + "40" : ac + "35"}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: ac,
+                  color: isRunning ? theme.palette.success.main : ac,
+                  position: "relative",
                   "& svg": { fontSize: 18 },
                 }}
               >
                 {getIcon(strategy.icon)}
+                {isRunning && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: -4,
+                      right: -4,
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: theme.palette.success.main,
+                      border: `2px solid ${theme.palette.background.paper}`,
+                      animation: "pulse 1.5s infinite",
+                      "@keyframes pulse": {
+                        "0%": { boxShadow: `0 0 0 0 ${theme.palette.success.main}70` },
+                        "70%": { boxShadow: `0 0 0 6px ${theme.palette.success.main}00` },
+                        "100%": { boxShadow: `0 0 0 0 ${theme.palette.success.main}00` },
+                      },
+                    }}
+                  />
+                )}
               </Box>
               <Box>
                 <Typography
@@ -471,7 +519,23 @@ export function EnhancedStrategyCard({
               gap: 0.8,
             }}
           >
-            <CategoryBadge category={strategy.category} size="small" />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <CategoryBadge category={strategy.category} size="small" />
+              {isRunning && (
+                <Chip
+                  size="small"
+                  label="LIVE"
+                  sx={{
+                    height: 18,
+                    fontSize: "0.6rem",
+                    fontWeight: 800,
+                    background: theme.palette.success.main,
+                    color: "#fff",
+                    border: "none",
+                  }}
+                />
+              )}
+            </Box>
 
             {hasBacktestData && (
               <Box sx={{ display: "flex", gap: 0.6 }}>
@@ -504,14 +568,14 @@ export function EnhancedStrategyCard({
             )}
           </Box>
 
-          {selected && (
+          {(selected || isRunning) && (
             <CheckCircleIcon
               sx={{
                 position: "absolute",
                 bottom: 8,
                 right: 8,
                 fontSize: 16,
-                color: ac,
+                color: isRunning ? theme.palette.success.main : ac,
                 opacity: 0.8,
               }}
             />

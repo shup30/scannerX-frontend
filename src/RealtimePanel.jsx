@@ -46,45 +46,32 @@ const STOCK_LISTS = {
 };
 
 export default function RealtimePanel({
-  selectedStrategy,
+  selectedStrategies,
   selectedStockList,
   strategies,
   wsConnected,
+  autoscans,
+  stats,
+  telegramStatus,
+  setTelegramStatus,
+  onRefreshStatus,
   onNewAlert,
 }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const [autoscans, setAutoscans] = useState([]);
   const [recentAlerts, setRecentAlerts] = useState([]);
-  const [stats, setStats] = useState({});
   const [starting, setStarting] = useState(false);
   const [stopping, setStopping] = useState(null);
   const [testing, setTesting] = useState(false);
-  const [telegramStatus, setTelegramStatus] = useState({
-    enabled: false,
-    checked: false,
-  });
   const [intervalSeconds, setIntervalSeconds] = useState(300);
   const [historyDays, setHistoryDays] = useState(5);
   const [clearingAlerts, setClearingAlerts] = useState(false);
   const [err, setErr] = useState(null);
 
-  const currentScanId = `${selectedStrategy}_${selectedStockList}`;
-  const isCurrentRunning = autoscans.some(
-    (s) => s.scan_id === currentScanId && s.is_running,
-  );
-
-  const fetchStatus = useCallback(async () => {
-    try {
-      const r = await fetch(`${API_BASE_URL}/api/autoscan/status`);
-      const d = await r.json();
-      if (d.success) {
-        setAutoscans(d.scans || []);
-        setStats(d.stats || {});
-        setTelegramStatus({ enabled: d.telegram_enabled, checked: true });
-      }
-    } catch {}
-  }, []);
+  const runningScanIds = autoscans
+    .filter((s) => s.is_running)
+    .map((s) => s.scan_id);
+  const isAnyRunning = runningScanIds.length > 0;
 
   const fetchAlerts = useCallback(async () => {
     try {
@@ -97,30 +84,33 @@ export default function RealtimePanel({
   }, []);
 
   useEffect(() => {
-    fetchStatus();
     fetchAlerts();
-    const t1 = setInterval(fetchStatus, 8000);
     const t2 = setInterval(fetchAlerts, 15000);
     return () => {
-      clearInterval(t1);
       clearInterval(t2);
     };
-  }, [fetchStatus, fetchAlerts]);
+  }, [fetchAlerts]);
 
   const startScan = async () => {
-    if (!selectedStrategy) return;
+    if (selectedStrategies.length === 0) return;
     setStarting(true);
     setErr(null);
     try {
-      const r = await fetch(
-        `${API_BASE_URL}/api/autoscan/start?strategy=${selectedStrategy}&stock_list=${selectedStockList}&interval_seconds=${intervalSeconds}&history_days=${historyDays}`,
-        { method: "POST" },
-      );
-      if (!r.ok) {
-        const e = await r.json();
-        throw new Error(e.detail || "Failed");
+      // Start scans for all selected strategies that aren't already running
+      for (const strategy of selectedStrategies) {
+        const scanId = `${strategy}_${selectedStockList}`;
+        if (runningScanIds.includes(scanId)) continue;
+
+        const r = await fetch(
+          `${API_BASE_URL}/api/autoscan/start?strategy=${strategy}&stock_list=${selectedStockList}&interval_seconds=${intervalSeconds}&history_days=${historyDays}`,
+          { method: "POST" },
+        );
+        if (!r.ok) {
+          const e = await r.json();
+          throw new Error(`Failed to start ${strategy}: ${e.detail || "Error"}`);
+        }
       }
-      await fetchStatus();
+      await onRefreshStatus();
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -140,7 +130,7 @@ export default function RealtimePanel({
         const e = await r.json();
         throw new Error(e.detail || "Failed");
       }
-      await fetchStatus();
+      await onRefreshStatus();
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -157,7 +147,7 @@ export default function RealtimePanel({
       });
       const d = await r.json();
       if (!d.success) throw new Error(d.detail || "Test failed");
-      setTelegramStatus({ enabled: true, checked: true });
+      if (setTelegramStatus) setTelegramStatus({ enabled: true, checked: true });
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -218,17 +208,17 @@ export default function RealtimePanel({
                   width: isMobile ? 32 : 40,
                   height: isMobile ? 32 : 40,
                   borderRadius: 2.5,
-                  background: isCurrentRunning
+                  background: isAnyRunning
                     ? `${theme.palette.success.main}18`
                     : theme.palette.background.elevated,
-                  border: `2px solid ${isCurrentRunning ? `${theme.palette.success.main}40` : theme.palette.divider}`,
+                  border: `2px solid ${isAnyRunning ? `${theme.palette.success.main}40` : theme.palette.divider}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   transition: "all 0.3s",
                 }}
               >
-                {isCurrentRunning ? (
+                {isAnyRunning ? (
                   <SensorsIcon
                     sx={{
                       color: theme.palette.success.main,
@@ -268,13 +258,13 @@ export default function RealtimePanel({
                       width: 6,
                       height: 6,
                       borderRadius: "50%",
-                      background: isCurrentRunning
+                      background: isAnyRunning
                         ? theme.palette.success.main
                         : theme.palette.text.disabled,
-                      boxShadow: isCurrentRunning
+                      boxShadow: isAnyRunning
                         ? `0 0 8px ${theme.palette.success.main}`
                         : "none",
-                      animation: isCurrentRunning
+                      animation: isAnyRunning
                         ? "pulse 1.5s infinite"
                         : "none",
                       "@keyframes pulse": {
@@ -287,14 +277,14 @@ export default function RealtimePanel({
                     sx={{
                       fontFamily: '"JetBrains Mono", monospace',
                       fontSize: isMobile ? "0.6rem" : "0.65rem",
-                      color: isCurrentRunning
+                      color: isAnyRunning
                         ? theme.palette.success.main
                         : theme.palette.text.disabled,
                       letterSpacing: "0.1em",
                     }}
                   >
-                    {isCurrentRunning ? "SCANNING" : "IDLE"} ·{" "}
-                    {selectedStrategy || "no strategy"}
+                    {isAnyRunning ? "SCANNING" : "IDLE"} ·{" "}
+                    {selectedStrategies.length} SELECT
                   </Typography>
                 </Box>
               </Box>
@@ -344,7 +334,7 @@ export default function RealtimePanel({
 
               <IconButton
                 size="small"
-                onClick={fetchStatus}
+                onClick={onRefreshStatus}
                 sx={{
                   color: theme.palette.text.disabled,
                   "&:hover": { color: theme.palette.primary.main },
@@ -367,7 +357,7 @@ export default function RealtimePanel({
                   value={intervalSeconds}
                   label="Scan Interval"
                   onChange={(e) => setIntervalSeconds(e.target.value)}
-                  disabled={isCurrentRunning}
+                  disabled={isAnyRunning}
                 >
                   {[
                     { v: 60, l: "1 min" },
@@ -390,7 +380,7 @@ export default function RealtimePanel({
                   value={historyDays}
                   label="History Days"
                   onChange={(e) => setHistoryDays(e.target.value)}
-                  disabled={isCurrentRunning}
+                  disabled={isAnyRunning}
                 >
                   {[1, 3, 5, 7].map((d) => (
                     <MenuItem key={d} value={d} sx={{ fontSize: "0.78rem" }}>
@@ -409,59 +399,33 @@ export default function RealtimePanel({
                   alignItems: "center",
                 }}
               >
-                {!isCurrentRunning ? (
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    onClick={startScan}
-                    disabled={starting || !selectedStrategy}
-                    startIcon={
-                      starting ? (
-                        <CircularProgress size={13} sx={{ color: "inherit" }} />
-                      ) : (
-                        <PlayArrowIcon />
-                      )
-                    }
-                    sx={{
-                      background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                      color: "#fff",
-                      fontWeight: 700,
-                      fontSize: isMobile ? "0.7rem" : "0.75rem",
-                      py: isMobile ? 0.8 : 1,
-                      boxShadow: `0 4px 16px ${theme.palette.success.main}35`,
-                      "&:hover": {
-                        background: `linear-gradient(135deg, ${theme.palette.success.dark}, ${theme.palette.success.main})`,
-                      },
-                      "&:disabled": { opacity: 0.4 },
-                    }}
-                  >
-                    {starting ? "STARTING..." : "START AUTO-SCAN"}
-                  </Button>
-                ) : (
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    color="error"
-                    onClick={() => stopScan(currentScanId)}
-                    disabled={stopping === currentScanId}
-                    startIcon={
-                      stopping === currentScanId ? (
-                        <CircularProgress size={13} sx={{ color: "inherit" }} />
-                      ) : (
-                        <StopIcon />
-                      )
-                    }
-                    sx={{
-                      fontWeight: 700,
-                      fontSize: isMobile ? "0.7rem" : "0.75rem",
-                      py: isMobile ? 0.8 : 1,
-                    }}
-                  >
-                    {stopping === currentScanId
-                      ? "STOPPING..."
-                      : "STOP CURRENT SCAN"}
-                  </Button>
-                )}
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={startScan}
+                  disabled={starting || selectedStrategies.length === 0}
+                  startIcon={
+                    starting ? (
+                      <CircularProgress size={13} sx={{ color: "inherit" }} />
+                    ) : (
+                      <PlayArrowIcon />
+                    )
+                  }
+                  sx={{
+                    background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: isMobile ? "0.7rem" : "0.75rem",
+                    py: isMobile ? 0.8 : 1,
+                    boxShadow: `0 4px 16px ${theme.palette.success.main}35`,
+                    "&:hover": {
+                      background: `linear-gradient(135deg, ${theme.palette.success.dark}, ${theme.palette.success.main})`,
+                    },
+                    "&:disabled": { opacity: 0.4 },
+                  }}
+                >
+                  {starting ? "STARTING..." : "START AUTO-SCAN"}
+                </Button>
                 {!telegramStatus.enabled && telegramStatus.checked && (
                   <Button
                     variant="outlined"
