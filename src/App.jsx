@@ -91,7 +91,8 @@ import LanguageSwitcher from "./LanguageSwitcher";
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const rawApiUrl = import.meta.env.VITE_API_BASE_URL || "";
+const API_BASE_URL = rawApiUrl.endsWith("/") ? rawApiUrl.slice(0, -1) : rawApiUrl;
 
 const STOCK_LISTS = {
   nifty_50: { name: "Nifty 50", count: 50, icon: "🇮🇳" },
@@ -249,9 +250,15 @@ export default function App() {
   const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
     try {
-      const ws = new WebSocket(
-        `${API_BASE_URL.replace("http", "ws")}/ws/alerts`,
-      );
+      let wsUrl = API_BASE_URL;
+      if (wsUrl.startsWith("http")) {
+        wsUrl = wsUrl.replace(/^http/, "ws") + "/ws/alerts";
+      } else {
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const host = window.location.host;
+        wsUrl = `${protocol}//${host}${wsUrl}/ws/alerts`;
+      }
+      const ws = new WebSocket(wsUrl);
       ws.onopen = () => setWsConnected(true);
       ws.onclose = () => {
         setWsConnected(false);
@@ -375,7 +382,7 @@ export default function App() {
     setScanResults(null);
     try {
       const r = await fetch(
-        `${API_BASE_URL}/api/scanner/scan?strategy=${selectedStrategy}&stock_list=${selectedStockList}&intraday_days=${intradayDays}`,
+        `${API_BASE_URL}/api/scanner/scan?strategy=${selectedStrategy}&stock_list=${selectedStockList}&history_days=${intradayDays}`,
         { method: "POST" },
       );
       if (!r.ok) throw new Error(`Server Error: ${r.status}`);

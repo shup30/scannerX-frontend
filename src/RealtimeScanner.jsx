@@ -93,9 +93,17 @@ export default function RealtimeScanner({
   }, []);
 
   const connectWebSocket = () => {
-    const wsUrl = API_BASE_URL.replace("http", "ws") + "/ws";
-    const ws = new WebSocket(wsUrl);
+    let wsUrl = API_BASE_URL || "";
+    if (wsUrl.endsWith("/")) wsUrl = wsUrl.slice(0, -1);
 
+    if (wsUrl.startsWith("http")) {
+      wsUrl = wsUrl.replace(/^http/, "ws") + "/ws/alerts";
+    } else {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const host = window.location.host;
+      wsUrl = `${protocol}//${host}${wsUrl}/ws/alerts`;
+    }
+    const ws = new WebSocket(wsUrl);
     ws.onopen = () => {
       console.log("WebSocket connected");
       setWsConnected(true);
@@ -235,11 +243,11 @@ export default function RealtimeScanner({
     try {
       const res = await fetch(
         `${API_BASE_URL}/api/realtime/start?` +
-          `strategy=${selectedStrategy}&` +
-          `stock_list=${selectedStockList}&` +
-          `scan_mode=${scanMode}&` +
-          `interval_seconds=${intervalSeconds}&` +
-          `alert_cooldown=${alertCooldown}`,
+        `strategy=${selectedStrategy}&` +
+        `stock_list=${selectedStockList}&` +
+        `scan_mode=${scanMode}&` +
+        `interval_seconds=${intervalSeconds}&` +
+        `alert_cooldown=${alertCooldown}`,
         { method: "POST" },
       );
 
