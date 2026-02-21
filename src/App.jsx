@@ -84,6 +84,7 @@ import BacktestPanel from "./BacktestPanel";
 import RealtimePanel from "./RealtimePanel";
 import AlertToast from "./AlertToast";
 import StrategyInfoDialog from "./StrategyInfoDialog";
+import IndexIndicatorPanel from "./IndexIndicatorPanel";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -280,7 +281,7 @@ export default function App() {
       }, 30000);
       ws.addEventListener("close", () => clearInterval(ping));
       wsRef.current = ws;
-    } catch {}
+    } catch { }
   }, []);
 
   useEffect(() => {
@@ -834,6 +835,19 @@ export default function App() {
                 </ListItemIcon>
                 <ListItemText primary="Auto-Scan" />
               </ListItem>
+              <ListItem
+                button
+                onClick={() => {
+                  setMainTab(3);
+                  setDrawerOpen(false);
+                }}
+                selected={mainTab === 3}
+              >
+                <ListItemIcon>
+                  <AssessmentIcon />
+                </ListItemIcon>
+                <ListItemText primary="Index Signals" />
+              </ListItem>
             </List>
             <Divider sx={{ my: 2 }} />
             <Box sx={{ px: 2 }}>
@@ -1027,11 +1041,17 @@ export default function App() {
                 iconPosition="start"
                 label={isMobile ? "AUTO" : "AUTO-SCAN"}
               />
+              <Tab
+                icon={<AssessmentIcon sx={{ fontSize: isMobile ? 16 : 18 }} />}
+                iconPosition="start"
+                label={isMobile ? "INDEX" : "INDEX SIGNALS"}
+              />
             </Tabs>
           </Card>
 
           {/* ── Strategy Selection ── */}
-          <Card sx={{ mb: 3 }}>
+          {mainTab !== 3 && (
+            <Card sx={{ mb: 3 }}>
               <CardContent sx={{ p: isMobile ? 2 : 2.5 }}>
                 {/* Header */}
                 <Box
@@ -1388,6 +1408,7 @@ export default function App() {
                 </Grid>
               </CardContent>
             </Card>
+          )}
 
           {/* ── Tab Content ── */}
           {mainTab === 0 && (
@@ -1417,6 +1438,7 @@ export default function App() {
               }}
             />
           )}
+          {mainTab === 3 && <IndexIndicatorPanel />}
         </Container>
 
         {/* Strategy Info Dialog */}
