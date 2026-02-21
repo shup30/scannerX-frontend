@@ -87,6 +87,7 @@ import AlertToast from "./AlertToast";
 import StrategyInfoDialog from "./StrategyInfoDialog";
 import IndexIndicatorPanel from "./IndexIndicatorPanel";
 import LanguageSwitcher from "./LanguageSwitcher";
+import InstallPrompt from "./components/InstallPrompt";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -510,6 +511,9 @@ export default function App() {
 
       {/* Alert Toast */}
       <AlertToast alert={liveAlert} onClose={() => setLiveAlert(null)} />
+
+      {/* PWA Install Prompt */}
+      <InstallPrompt />
 
       {/* Scroll to Top */}
       <ScrollToTop />
