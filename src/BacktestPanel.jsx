@@ -22,6 +22,7 @@ import {
   ExpandLess as ExpandLessIcon,
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
+  Timeline as TimelineIcon,
 } from "@mui/icons-material";
 import { StatCard, MonoLabel, DirectionBadge } from "./components";
 import { formatTs } from "./utils";
@@ -35,7 +36,73 @@ export default function BacktestPanel({ backtestResults }) {
     setExpandedRows((prev) => ({ ...prev, [symbol]: !prev[symbol] }));
   };
 
-  if (!backtestResults) return null;
+  if (!backtestResults) {
+    return (
+      <Card
+        sx={{
+          border: `1px solid ${theme.palette.divider}`,
+          background: theme.palette.background.paper,
+        }}
+      >
+        <CardContent>
+          <Box
+            sx={{
+              py: { xs: 6, md: 10 },
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                width: 72,
+                height: 72,
+                borderRadius: "50%",
+                background: `${theme.palette.secondary.main}15`,
+                border: `2px solid ${theme.palette.secondary.main}30`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mb: 1,
+              }}
+            >
+              <TimelineIcon
+                sx={{ fontSize: 36, color: theme.palette.secondary.main, opacity: 0.7 }}
+              />
+            </Box>
+            <Typography
+              sx={{
+                fontFamily: '"JetBrains Mono", monospace',
+                fontSize: "1rem",
+                fontWeight: 700,
+                color: theme.palette.text.primary,
+                letterSpacing: "0.04em",
+              }}
+            >
+              NO BACKTEST RESULTS
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: '"JetBrains Mono", monospace',
+                fontSize: "0.75rem",
+                color: theme.palette.text.disabled,
+                maxWidth: 380,
+                lineHeight: 1.7,
+              }}
+            >
+              Select a strategy above, choose a backtest period, then click{" "}
+              <strong style={{ color: theme.palette.secondary.main }}>
+                RUN BACKTEST
+              </strong>{" "}
+              to simulate historical performance.
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const agg = backtestResults.aggregate;
 
@@ -496,7 +563,7 @@ export default function BacktestPanel({ backtestResults }) {
                                               trade.exit_reason === "TARGET"
                                                 ? "🎯"
                                                 : trade.exit_reason ===
-                                                    "STOP_LOSS"
+                                                  "STOP_LOSS"
                                                   ? "🛑"
                                                   : "⏱"
                                             }
@@ -509,7 +576,7 @@ export default function BacktestPanel({ backtestResults }) {
                                                 trade.exit_reason === "TARGET"
                                                   ? `${theme.palette.success.main}12`
                                                   : trade.exit_reason ===
-                                                      "STOP_LOSS"
+                                                    "STOP_LOSS"
                                                     ? `${theme.palette.error.main}12`
                                                     : `${theme.palette.warning.main}12`,
                                               border: `1px solid ${trade.exit_reason === "TARGET" ? `${theme.palette.success.main}30` : trade.exit_reason === "STOP_LOSS" ? `${theme.palette.error.main}30` : `${theme.palette.warning.main}30`}`,

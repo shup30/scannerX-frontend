@@ -1262,7 +1262,7 @@ export default function App() {
                     </FormControl>
                   </Grid>
 
-                  {mainTab === 0 && (
+                  {mainTab === 1 && (
                     <Grid item xs={12} md={4}>
                       <FormControl fullWidth size="small">
                         <InputLabel>Lookback Period</InputLabel>
@@ -1289,7 +1289,7 @@ export default function App() {
                       </FormControl>
                     </Grid>
                   )}
-                  {mainTab === 1 && (
+                  {mainTab === 2 && (
                     <Grid item xs={12} md={4}>
                       <FormControl fullWidth size="small">
                         <InputLabel>Backtest Period</InputLabel>
@@ -1312,7 +1312,7 @@ export default function App() {
                     </Grid>
                   )}
 
-                  {mainTab !== 2 && (
+                  {(mainTab === 1 || mainTab === 2) && (
                     <Grid item xs={12} md={4}>
                       <Box
                         sx={{
@@ -1322,7 +1322,7 @@ export default function App() {
                           alignItems: "center",
                         }}
                       >
-                        {mainTab === 0 ? (
+                        {mainTab === 1 ? (
                           <Button
                             fullWidth
                             variant="contained"
