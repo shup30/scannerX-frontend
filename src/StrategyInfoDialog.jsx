@@ -172,9 +172,9 @@ export default function StrategyInfoDialog({
               ],
               [
                 "Scan Mode",
-                mainTab === 0
+                mainTab === 1
                   ? "Live Scanner"
-                  : mainTab === 1
+                  : mainTab === 2
                     ? "1:3 R:R Backtest"
                     : "Auto-Scan + Alerts",
               ],

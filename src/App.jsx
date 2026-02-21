@@ -66,6 +66,7 @@ import {
 } from "@mui/icons-material";
 
 import BoltIcon from "@mui/icons-material/Bolt";
+import { useTranslation } from "react-i18next";
 
 import { getTheme } from "./theme";
 import {
@@ -85,6 +86,7 @@ import RealtimePanel from "./RealtimePanel";
 import AlertToast from "./AlertToast";
 import StrategyInfoDialog from "./StrategyInfoDialog";
 import IndexIndicatorPanel from "./IndexIndicatorPanel";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -169,6 +171,7 @@ function ScrollToTop() {
 // MAIN APP
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
+  const { t } = useTranslation();
   const [mode, setMode] = useState(() => {
     const saved = localStorage.getItem("theme_mode");
     return saved || "dark";
@@ -471,7 +474,7 @@ export default function App() {
               },
             }}
           >
-            INITIALISING SCANNER...
+            {t('app.loading')}
           </Typography>
         </Box>
       </ThemeProvider>
@@ -569,18 +572,18 @@ export default function App() {
                       lineHeight: 1,
                     }}
                   >
-                    STOCKS SCANNER
+                    {t('app.title')}
                   </Typography>
                   <Typography
                     sx={{
-                      fontFamily: '"JetBrains Mono", monospace',
+                      fontFamily: '"JetBrains Mono", "Noto Sans Devanagari", monospace',
                       fontSize: "0.58rem",
                       color: theme.palette.primary.main,
                       letterSpacing: "0.12em",
                       mt: 0.2,
                     }}
                   >
-                    INTRADAY · REALTIME · ALERTS
+                    {t('app.subtitle')}
                   </Typography>
                 </Box>
               )}
@@ -618,7 +621,7 @@ export default function App() {
                 <>
                   <Tooltip
                     title={
-                      wsConnected ? "WebSocket connected" : "WebSocket offline"
+                      wsConnected ? t('status.wsConnected') : t('status.wsOffline')
                     }
                   >
                     <Box
@@ -648,13 +651,13 @@ export default function App() {
                           fontWeight: 700,
                         }}
                       >
-                        {wsConnected ? "LIVE" : "OFF"}
+                        {wsConnected ? t('status.live') : t('status.off')}
                       </Typography>
                     </Box>
                   </Tooltip>
 
                   <Chip
-                    label={`${Object.keys(strategies).length} STRATS`}
+                    label={`${Object.keys(strategies).length} ${t('status.strats')}`}
                     size="small"
                     sx={{
                       background: `${theme.palette.primary.main}15`,
@@ -666,7 +669,7 @@ export default function App() {
                     }}
                   />
 
-                  <Tooltip title="Reload strategies">
+                  <Tooltip title={t('status.reloadStrategies')}>
                     <IconButton
                       size="small"
                       onClick={fetchStrategies}
@@ -719,11 +722,12 @@ export default function App() {
                       fontWeight: 700,
                     }}
                   >
-                    {isServerHealthy ? "ONLINE" : "OFFLINE"}
+                    {isServerHealthy ? t('status.online') : t('status.offline')}
                   </Typography>
                 )}
               </Box>
 
+              <LanguageSwitcher />
               <IconButton
                 onClick={toggleColorMode}
                 sx={{
@@ -778,7 +782,7 @@ export default function App() {
                   fontSize: "0.9rem",
                 }}
               >
-                MENU
+                {t('drawer.menu')}
               </Typography>
               <IconButton size="small" onClick={() => setDrawerOpen(false)}>
                 <CloseIcon />
@@ -795,9 +799,9 @@ export default function App() {
                 selected={mainTab === 0}
               >
                 <ListItemIcon>
-                  <BoltIcon />
+                  <AssessmentIcon />
                 </ListItemIcon>
-                <ListItemText primary="Live Scanner" />
+                <ListItemText primary={t('drawer.indexSignals')} />
               </ListItem>
               <ListItem
                 button
@@ -808,9 +812,9 @@ export default function App() {
                 selected={mainTab === 1}
               >
                 <ListItemIcon>
-                  <TimelineIcon />
+                  <BoltIcon />
                 </ListItemIcon>
-                <ListItemText primary="Backtest 1:3" />
+                <ListItemText primary={t('drawer.liveScanner')} />
               </ListItem>
               <ListItem
                 button
@@ -819,6 +823,19 @@ export default function App() {
                   setDrawerOpen(false);
                 }}
                 selected={mainTab === 2}
+              >
+                <ListItemIcon>
+                  <TimelineIcon />
+                </ListItemIcon>
+                <ListItemText primary={t('drawer.backtest')} />
+              </ListItem>
+              <ListItem
+                button
+                onClick={() => {
+                  setMainTab(3);
+                  setDrawerOpen(false);
+                }}
+                selected={mainTab === 3}
               >
                 <ListItemIcon>
                   <Badge
@@ -833,26 +850,13 @@ export default function App() {
                     <SensorsIcon />
                   </Badge>
                 </ListItemIcon>
-                <ListItemText primary="Auto-Scan" />
-              </ListItem>
-              <ListItem
-                button
-                onClick={() => {
-                  setMainTab(3);
-                  setDrawerOpen(false);
-                }}
-                selected={mainTab === 3}
-              >
-                <ListItemIcon>
-                  <AssessmentIcon />
-                </ListItemIcon>
-                <ListItemText primary="Index Signals" />
+                <ListItemText primary={t('drawer.autoScan')} />
               </ListItem>
             </List>
             <Divider sx={{ my: 2 }} />
             <Box sx={{ px: 2 }}>
               <MonoLabel size="0.65rem" color={theme.palette.text.disabled}>
-                Quick Stats
+                {t('drawer.quickStats')}
               </MonoLabel>
               <Box
                 sx={{
@@ -875,7 +879,7 @@ export default function App() {
                       color: theme.palette.text.secondary,
                     }}
                   >
-                    Strategies
+                    {t('drawer.strategies')}
                   </Typography>
                   <Chip
                     label={Object.keys(strategies).length}
@@ -896,7 +900,7 @@ export default function App() {
                       color: theme.palette.text.secondary,
                     }}
                   >
-                    WebSocket
+                    {t('drawer.webSocket')}
                   </Typography>
                   <Chip
                     label={wsConnected ? "Live" : "Offline"}
@@ -919,7 +923,7 @@ export default function App() {
                         color: theme.palette.text.secondary,
                       }}
                     >
-                      Alerts
+                      {t('drawer.alerts')}
                     </Typography>
                     <Chip
                       label={alertCount}
@@ -985,7 +989,7 @@ export default function App() {
                 },
               }}
             >
-              Strategy API unavailable — using fallback. {strategiesError}
+              {t('strategy.apiUnavailable')} {strategiesError}
             </Alert>
           )}
 
@@ -1013,14 +1017,19 @@ export default function App() {
               }}
             >
               <Tab
+                icon={<AssessmentIcon sx={{ fontSize: isMobile ? 16 : 18 }} />}
+                iconPosition="start"
+                label={isMobile ? t('tabs.indexSignalsShort') : t('tabs.indexSignals')}
+              />
+              <Tab
                 icon={<BoltIcon sx={{ fontSize: isMobile ? 16 : 18 }} />}
                 iconPosition="start"
-                label={isMobile ? "SCAN" : "LIVE SCANNER"}
+                label={isMobile ? t('tabs.liveScannerShort') : t('tabs.liveScanner')}
               />
               <Tab
                 icon={<TimelineIcon sx={{ fontSize: isMobile ? 16 : 18 }} />}
                 iconPosition="start"
-                label={isMobile ? "TEST" : "BACKTEST 1:3"}
+                label={isMobile ? t('tabs.backtestShort') : t('tabs.backtest')}
               />
               <Tab
                 icon={
@@ -1039,18 +1048,13 @@ export default function App() {
                   </Badge>
                 }
                 iconPosition="start"
-                label={isMobile ? "AUTO" : "AUTO-SCAN"}
-              />
-              <Tab
-                icon={<AssessmentIcon sx={{ fontSize: isMobile ? 16 : 18 }} />}
-                iconPosition="start"
-                label={isMobile ? "INDEX" : "INDEX SIGNALS"}
+                label={isMobile ? t('tabs.autoScanShort') : t('tabs.autoScan')}
               />
             </Tabs>
           </Card>
 
           {/* ── Strategy Selection ── */}
-          {mainTab !== 3 && (
+          {mainTab !== 0 && (
             <Card sx={{ mb: 3 }}>
               <CardContent sx={{ p: isMobile ? 2 : 2.5 }}>
                 {/* Header */}
@@ -1065,7 +1069,7 @@ export default function App() {
                   }}
                 >
                   <MonoLabel color={theme.palette.text.disabled}>
-                    Select Strategy
+                    {t('strategy.selectStrategy')}
                   </MonoLabel>
                   <Box
                     sx={{
@@ -1097,7 +1101,7 @@ export default function App() {
                         },
                       }}
                     >
-                      <ToggleButton value="all">ALL</ToggleButton>
+                      <ToggleButton value="all">{t('strategy.all')}</ToggleButton>
                       <ToggleButton
                         value="LONG"
                         sx={{
@@ -1107,7 +1111,7 @@ export default function App() {
                           },
                         }}
                       >
-                        {!isMobile && "▲ "}LONG
+                        {!isMobile && "▲ "}{t('strategy.long')}
                       </ToggleButton>
                       <ToggleButton
                         value="SHORT"
@@ -1118,7 +1122,7 @@ export default function App() {
                           },
                         }}
                       >
-                        {!isMobile && "▼ "}SHORT
+                        {!isMobile && "▼ "}{t('strategy.short')}
                       </ToggleButton>
                     </ToggleButtonGroup>
                     {!isMobile && (
@@ -1135,7 +1139,7 @@ export default function App() {
                         }}
                       >
                         <MenuItem value="all" sx={{ fontSize: "0.72rem" }}>
-                          All Timeframes
+                          {t('strategy.allTimeframes')}
                         </MenuItem>
                         {presentCategories.map((c) => (
                           <MenuItem
@@ -1163,7 +1167,7 @@ export default function App() {
                           (t) => t.strategy === key && t.is_running,
                         )}
                         onClick={() => {
-                          if (mainTab === 2) {
+                          if (mainTab === 3) {
                             // Multi-select for Auto-Scan
                             setSelectedStrategies((prev) =>
                               prev.includes(key)
@@ -1382,7 +1386,7 @@ export default function App() {
                               : `BACKTEST ${backtestDays}D`}
                           </Button>
                         )}
-                        <Tooltip title="Strategy details">
+                        <Tooltip title={t('strategy.strategyDetails')}>
                           <IconButton
                             size="small"
                             disabled={selectedStrategies.length === 0}
@@ -1411,7 +1415,8 @@ export default function App() {
           )}
 
           {/* ── Tab Content ── */}
-          {mainTab === 0 && (
+          {mainTab === 0 && <IndexIndicatorPanel />}
+          {mainTab === 1 && (
             <ScanResultsPanel
               scanResults={scanResults}
               selectedStrategy={selectedStrategies[0]}
@@ -1420,8 +1425,8 @@ export default function App() {
               intradayDays={intradayDays}
             />
           )}
-          {mainTab === 1 && <BacktestPanel backtestResults={backtestResults} />}
-          {mainTab === 2 && (
+          {mainTab === 2 && <BacktestPanel backtestResults={backtestResults} />}
+          {mainTab === 3 && (
             <RealtimePanel
               selectedStrategies={selectedStrategies}
               selectedStockList={selectedStockList}
@@ -1438,7 +1443,6 @@ export default function App() {
               }}
             />
           )}
-          {mainTab === 3 && <IndexIndicatorPanel />}
         </Container>
 
         {/* Strategy Info Dialog */}

@@ -1,0 +1,76 @@
+{
+    "app": {
+        "title": "स्टॉक स्कॅनर",
+        "subtitle": "इंट्राडे · रिअलटाइम · अलर्ट",
+        "loading": "स्कॅनर सुरू होत आहे..."
+    },
+    "status": {
+        "live": "लाइव्ह",
+        "off": "बंद",
+        "online": "ऑनलाइन",
+        "offline": "ऑफलाइन",
+        "strats": "स्ट्रॅटेजी",
+        "wsConnected": "वेबसॉकेट जोडलेले",
+        "wsOffline": "वेबसॉकेट बंद",
+        "reloadStrategies": "स्ट्रॅटेजी पुन्हा लोड करा"
+    },
+    "tabs": {
+        "liveScanner": "लाइव्ह स्कॅनर",
+        "liveScannerShort": "स्कॅन",
+        "backtest": "बॅकटेस्ट 1:3",
+        "backtestShort": "टेस्ट",
+        "autoScan": "ऑटो-स्कॅन",
+        "autoScanShort": "ऑटो",
+        "indexSignals": "इंडेक्स सिग्नल",
+        "indexSignalsShort": "इंडेक्स"
+    },
+    "drawer": {
+        "menu": "मेनू",
+        "liveScanner": "लाइव्ह स्कॅनर",
+        "backtest": "बॅकटेस्ट 1:3",
+        "autoScan": "ऑटो-स्कॅन",
+        "indexSignals": "इंडेक्स सिग्नल",
+        "quickStats": "द्रुत आकडेवारी",
+        "strategies": "स्ट्रॅटेजी",
+        "webSocket": "वेबसॉकेट",
+        "alerts": "अलर्ट"
+    },
+    "strategy": {
+        "selectStrategy": "स्ट्रॅटेजी निवडा",
+        "all": "सर्व",
+        "long": "लाँग",
+        "short": "शॉर्ट",
+        "allTimeframes": "सर्व टाइमफ्रेम",
+        "strategyDetails": "स्ट्रॅटेजी तपशील",
+        "apiUnavailable": "स्ट्रॅटेजी API उपलब्ध नाही — फॉलबॅक वापरत आहे."
+    },
+    "actions": {
+        "scanNow": "आता स्कॅन करा",
+        "scanning": "स्कॅन होत आहे...",
+        "backtest": "बॅकटेस्ट",
+        "running": "चालू आहे..."
+    },
+    "filters": {
+        "intraday": "इंट्राडे",
+        "positional": "पोझिशनल",
+        "5min": "५ मिनिट",
+        "15min": "१५ मिनिट"
+    },
+    "stockLists": {
+        "nifty_50": "निफ्टी ५०",
+        "bank_nifty": "बँक निफ्टी",
+        "popular_fo": "लोकप्रिय F&O"
+    },
+    "labels": {
+        "stockList": "स्टॉक लिस्ट",
+        "intradayDays": "इंट्राडे दिवस",
+        "backtestDays": "बॅकटेस्ट दिवस",
+        "live": "लाइव्ह",
+        "connected": "जोडलेले",
+        "disconnected": "जोडलेले नाही"
+    },
+    "language": {
+        "en": "English",
+        "mr": "मराठी"
+    }
+}

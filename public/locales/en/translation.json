@@ -1,0 +1,76 @@
+{
+    "app": {
+        "title": "STOCKS SCANNER",
+        "subtitle": "INTRADAY · REALTIME · ALERTS",
+        "loading": "INITIALISING SCANNER..."
+    },
+    "status": {
+        "live": "LIVE",
+        "off": "OFF",
+        "online": "ONLINE",
+        "offline": "OFFLINE",
+        "strats": "STRATS",
+        "wsConnected": "WebSocket connected",
+        "wsOffline": "WebSocket offline",
+        "reloadStrategies": "Reload strategies"
+    },
+    "tabs": {
+        "liveScanner": "LIVE SCANNER",
+        "liveScannerShort": "SCAN",
+        "backtest": "BACKTEST 1:3",
+        "backtestShort": "TEST",
+        "autoScan": "AUTO-SCAN",
+        "autoScanShort": "AUTO",
+        "indexSignals": "INDEX SIGNALS",
+        "indexSignalsShort": "INDEX"
+    },
+    "drawer": {
+        "menu": "MENU",
+        "liveScanner": "Live Scanner",
+        "backtest": "Backtest 1:3",
+        "autoScan": "Auto-Scan",
+        "indexSignals": "Index Signals",
+        "quickStats": "Quick Stats",
+        "strategies": "Strategies",
+        "webSocket": "WebSocket",
+        "alerts": "Alerts"
+    },
+    "strategy": {
+        "selectStrategy": "Select Strategy",
+        "all": "ALL",
+        "long": "LONG",
+        "short": "SHORT",
+        "allTimeframes": "All Timeframes",
+        "strategyDetails": "Strategy details",
+        "apiUnavailable": "Strategy API unavailable — using fallback."
+    },
+    "actions": {
+        "scanNow": "SCAN NOW",
+        "scanning": "SCANNING...",
+        "backtest": "BACKTEST",
+        "running": "RUNNING..."
+    },
+    "filters": {
+        "intraday": "Intraday",
+        "positional": "Positional",
+        "5min": "5MIN",
+        "15min": "15MIN"
+    },
+    "stockLists": {
+        "nifty_50": "Nifty 50",
+        "bank_nifty": "Bank Nifty",
+        "popular_fo": "Popular F&O"
+    },
+    "labels": {
+        "stockList": "Stock List",
+        "intradayDays": "Intraday Days",
+        "backtestDays": "Backtest Days",
+        "live": "Live",
+        "connected": "Connected",
+        "disconnected": "Disconnected"
+    },
+    "language": {
+        "en": "English",
+        "mr": "मराठी"
+    }
+}
