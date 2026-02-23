@@ -14,6 +14,8 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 import SettingsIcon from "@mui/icons-material/Settings";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import axios from "axios";
+import CandlestickChart from "./CandlestickChart";
+import OptionChainWidget from "./OptionChainWidget";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const CAT_NAMES = { trend: "Trend & Moving Averages", momentum: "Momentum & Oscillators", volatility_volume: "Volatility & Volume", support_resistance: "Support/Resistance & Pivots" };
@@ -323,7 +325,7 @@ const ConstituentPanel = ({ constituentAnalysis, glass }) => {
 };
 
 /* ── MTF Predictor Panel ───────────────────────────────────────────── */
-const MTFPredictorPanel = ({ mtfPrediction, glass, accuracyRates }) => {
+const MTFPredictorPanel = ({ mtfPrediction, glass, accuracyRates, predHistories }) => {
   const [expanded, setExpanded] = useState("5m");
   if (!mtfPrediction || !mtfPrediction["5m"]?.direction) return null;
 
@@ -733,6 +735,17 @@ export default function IndexIndicatorPanel() {
             </Grid>
           </Grid>
 
+          {/* Candlestick Chart */}
+          {data.candles && data.candles.length > 0 && (
+            <CandlestickChart
+              candles={data.candles}
+              indicators={data.categories}
+              prediction={data.mtf_prediction?.["5m"]}
+              price={data.price}
+              indexName={indices.find(i => i.id === selectedIndex)?.name}
+            />
+          )}
+
           {/* Global Macro Context */}
           <GlobalContextPanel globalContext={data.global_context} glass={glass} />
 
@@ -743,7 +756,10 @@ export default function IndexIndicatorPanel() {
           <ConstituentPanel constituentAnalysis={data.constituent_analysis} glass={glass} />
 
           {/* MTF Predictor Panel */}
-          <MTFPredictorPanel mtfPrediction={data.mtf_prediction} glass={glass} accuracyRates={accuracyRates} />
+          <MTFPredictorPanel mtfPrediction={data.mtf_prediction} glass={glass} accuracyRates={accuracyRates} predHistories={predHistories} />
+
+          {/* Option Chain Analysis Widget */}
+          <OptionChainWidget selectedIndex={selectedIndex} />
 
           {/* Enhanced Price Ladder */}
           {data.categories && (() => {
