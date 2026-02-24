@@ -88,6 +88,7 @@ import StrategyInfoDialog from './components/StrategyInfoDialog';
 import IndexIndicatorPanel from './features/IndexIndicatorPanel';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import InstallPrompt from "./components/InstallPrompt";
+import { Switch, FormControlLabel } from '@mui/material';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -212,6 +213,13 @@ export default function App() {
     enabled: false,
     checked: false,
   });
+
+  // LLM Report status
+  const [llmEnabled, setLlmEnabled] = useState(false);
+  const [llmLoading, setLlmLoading] = useState(false);
+  const [llmProvider, setLlmProvider] = useState("deepseek");
+  const [llmProvidersList, setLlmProvidersList] = useState([]);
+
   const statusTimerRef = useRef(null);
 
   const fetchAutoscanStatus = async () => {
@@ -229,8 +237,69 @@ export default function App() {
     }
   };
 
+  const fetchLlmStatus = async () => {
+    try {
+      const r = await fetch(`${API_BASE_URL}/api/llm-reporter/status`);
+      if (!r.ok) throw new Error("LLM status failed");
+      const d = await r.json();
+      if (d.success) {
+        setLlmEnabled(d.data.enabled);
+        setLlmProvider(d.data.active_provider || "deepseek");
+      }
+
+      const pRes = await fetch(`${API_BASE_URL}/api/llm-reporter/providers`);
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        if (pData.success) {
+          setLlmProvidersList(pData.providers || []);
+        }
+      }
+    } catch (e) {
+      console.error("LLM status error:", e);
+    }
+  };
+
+  const switchLlmProvider = async (newProvider) => {
+    try {
+      setLlmLoading(true);
+      const r = await fetch(`${API_BASE_URL}/api/llm-reporter/provider`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: newProvider }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        setLlmProvider(d.active_provider);
+      }
+    } catch (e) {
+      console.error("LLM Provider switch error:", e);
+    } finally {
+      setLlmLoading(false);
+    }
+  };
+
+  const toggleLlmReporter = async () => {
+    try {
+      setLlmLoading(true);
+      const r = await fetch(`${API_BASE_URL}/api/llm-reporter/toggle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: !llmEnabled }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        setLlmEnabled(d.enabled);
+      }
+    } catch (e) {
+      console.error("LLM toggle error:", e);
+    } finally {
+      setLlmLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchAutoscanStatus();
+    fetchLlmStatus();
     statusTimerRef.current = setInterval(fetchAutoscanStatus, 3000);
     return () => {
       if (statusTimerRef.current) clearInterval(statusTimerRef.current);
@@ -735,6 +804,42 @@ export default function App() {
                   >
                     {isServerHealthy ? t('status.online') : t('status.offline')}
                   </Typography>
+                )}
+              </Box>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', ml: 1, mr: 1, borderRadius: 2, bgcolor: llmEnabled ? 'rgba(0,176,255,0.1)' : 'rgba(100,116,139,0.1)', px: 1, py: 0.3, border: `1px solid ${llmEnabled ? 'rgba(0,176,255,0.3)' : 'transparent'}`, gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  {llmLoading ? <CircularProgress size={14} sx={{ mr: 1 }} /> : <BoltIcon sx={{ fontSize: 16, mr: 0.5, color: llmEnabled ? '#00b0ff' : '#64748b' }} />}
+                  <FormControlLabel
+                    control={<Switch checked={llmEnabled} onChange={toggleLlmReporter} disabled={llmLoading} size="small" />}
+                    label={<Typography variant="caption" sx={{ fontWeight: 'bold', color: llmEnabled ? '#00b0ff' : '#64748b', fontFamily: '"JetBrains Mono", monospace' }}>AI REPORT</Typography>}
+                    sx={{ m: 0 }}
+                  />
+                </Box>
+                {llmProvidersList.length > 0 && (
+                  <Select
+                    size="small"
+                    value={llmProvider}
+                    onChange={(e) => switchLlmProvider(e.target.value)}
+                    disabled={llmLoading}
+                    sx={{
+                      height: 24,
+                      fontSize: '0.65rem',
+                      fontFamily: '"JetBrains Mono", monospace',
+                      color: '#00b0ff',
+                      '.MuiOutlinedInput-notchedOutline': { border: 'none' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                      '.MuiSelect-select': { py: 0, pr: '24px !important', pl: 1 },
+                      '.MuiSvgIcon-root': { color: '#00b0ff' }
+                    }}
+                  >
+                    {llmProvidersList.map((p) => (
+                      <MenuItem key={p.id} value={p.id} disabled={!p.is_available} sx={{ fontSize: '0.7rem', fontFamily: '"JetBrains Mono", monospace' }}>
+                        {p.display_name} {!p.is_available && "(Unconfigured)"}
+                      </MenuItem>
+                    ))}
+                  </Select>
                 )}
               </Box>
 
@@ -1426,7 +1531,7 @@ export default function App() {
           )}
 
           {/* ── Tab Content ── */}
-          {mainTab === 0 && <IndexIndicatorPanel />}
+          {mainTab === 0 && <IndexIndicatorPanel llmEnabled={llmEnabled} llmLoading={llmLoading} />}
           {mainTab === 1 && (
             <ScanResultsPanel
               scanResults={scanResults}

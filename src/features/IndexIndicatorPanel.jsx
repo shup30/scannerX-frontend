@@ -20,6 +20,7 @@ import GatedSignalPanel from './GatedSignalPanel';
 import InstitutionalSignalPanel from './InstitutionalSignalPanel';
 import SystemHealthPanel from './SystemHealthPanel';
 import ContextMatrixPanel from './ContextMatrixPanel';
+import LLMReportPanel from './LLMReportPanel';
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const CAT_NAMES = { trend: "Trend & Moving Averages", momentum: "Momentum & Oscillators", volatility_volume: "Volatility & Volume", support_resistance: "Support/Resistance & Pivots" };
@@ -499,7 +500,7 @@ const buildLevels = (cats, cp) => {
 };
 
 /* ══════════════════════════════════════════════════════════════════════ */
-export default function IndexIndicatorPanel() {
+export default function IndexIndicatorPanel({ llmEnabled, llmLoading }) {
   const theme = useTheme();
   const [selectedIndex, setSelectedIndex] = useState("nifty");
   const [loading, setLoading] = useState(false);
@@ -672,6 +673,16 @@ export default function IndexIndicatorPanel() {
               {divs.rsi?.type !== "none" && <Alert severity="warning" icon={<WarningAmberIcon />} sx={{ mb: 1 }}>⚠ {divs.rsi.type === "bullish" ? "Bullish" : "Bearish"} RSI Divergence ({divs.rsi.strength})</Alert>}
               {divs.macd?.type !== "none" && <Alert severity="warning" icon={<WarningAmberIcon />}>⚠ {divs.macd.type === "bullish" ? "Bullish" : "Bearish"} MACD Divergence ({divs.macd.strength})</Alert>}
             </Box>
+          )}
+
+          {/* AI Trading Report Panel */}
+          {(llmEnabled || llmLoading) && (
+            <LLMReportPanel
+              llmReport={data.llm_report}
+              isEnabled={llmEnabled}
+              loading={llmLoading}
+              glass={glass}
+            />
           )}
 
           {/* Top Cards: Price, Composite, Regime */}
