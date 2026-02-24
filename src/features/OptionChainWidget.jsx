@@ -57,7 +57,7 @@ export default function OptionChainWidget({ selectedIndex }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [countdown, setCountdown] = useState(300);
+    const [countdown, setCountdown] = useState(60);
     const intervalRef = useRef(null);
     const countdownRef = useRef(null);
 
@@ -86,13 +86,13 @@ export default function OptionChainWidget({ selectedIndex }) {
             setError(err.response?.data?.detail || "Option chain unavailable");
         } finally {
             setLoading(false);
-            setCountdown(300);
+            setCountdown(60);
         }
     }, [selectedIndex]);
 
     useEffect(() => {
         fetchOC();
-        intervalRef.current = setInterval(fetchOC, 300000); // 5 min
+        intervalRef.current = setInterval(fetchOC, 60000); // 1 min
         countdownRef.current = setInterval(() => setCountdown((c) => Math.max(0, c - 1)), 1000);
         return () => {
             clearInterval(intervalRef.current);
@@ -217,10 +217,10 @@ export default function OptionChainWidget({ selectedIndex }) {
                     <Box sx={{ mb: 2 }}>
                         <Typography variant="caption" color="text.secondary" fontWeight="bold" sx={{ display: "block", mb: 1 }}>CHANGE COMPARISON</Typography>
                         <Grid container spacing={1}>
-                            {["5m", "15m", "1h"].map((tf) => {
+                            {["3m", "5m", "15m", "1h"].map((tf) => {
                                 const comp = comparisons[tf];
                                 if (!comp?.available) return (
-                                    <Grid item xs={4} key={tf}>
+                                    <Grid item xs={6} sm={3} key={tf}>
                                         <Box sx={{ p: 1, borderRadius: 2, bgcolor: isDark ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.02)", textAlign: "center" }}>
                                             <Typography variant="caption" fontWeight="bold" color="text.secondary">{comp?.label || tf}</Typography>
                                             <Typography variant="caption" color="text.disabled" sx={{ display: "block", fontSize: "0.5rem" }}>No data yet</Typography>
@@ -228,10 +228,14 @@ export default function OptionChainWidget({ selectedIndex }) {
                                     </Grid>
                                 );
                                 return (
-                                    <Grid item xs={4} key={tf}>
+                                    <Grid item xs={6} sm={3} key={tf}>
                                         <Box sx={{ p: 1, borderRadius: 2, bgcolor: isDark ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.02)" }}>
                                             <Typography variant="caption" fontWeight="bold" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>{comp.label}</Typography>
                                             <Box sx={{ display: "flex", flexDirection: "column", gap: 0.4 }}>
+                                                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                    <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.5rem" }}>Buildup</Typography>
+                                                    <Typography variant="caption" sx={{ fontSize: "0.5rem", fontWeight: "bold", color: comp.buildup?.includes("Long B") || comp.buildup?.includes("Short C") ? "success.main" : comp.buildup?.includes("Short B") || comp.buildup?.includes("Long U") ? "error.main" : "text.secondary" }}>{comp.buildup}</Typography>
+                                                </Box>
                                                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                     <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.5rem" }}>PCR</Typography>
                                                     <DeltaChip value={comp.pcr_change} />
@@ -243,10 +247,6 @@ export default function OptionChainWidget({ selectedIndex }) {
                                                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                     <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.5rem" }}>Net OI</Typography>
                                                     <DeltaChip value={comp.net_oi_change} />
-                                                </Box>
-                                                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                    <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.5rem" }}>IV Skew</Typography>
-                                                    <DeltaChip value={comp.iv_skew_change} suffix="%" invert />
                                                 </Box>
                                             </Box>
                                         </Box>
