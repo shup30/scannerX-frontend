@@ -68,25 +68,25 @@ import {
 import BoltIcon from "@mui/icons-material/Bolt";
 import { useTranslation } from "react-i18next";
 
-import { getTheme } from "./theme";
+import { getTheme } from './styles/theme';
 import {
   StatCard,
   MonoLabel,
   EnhancedStrategyCard,
   CATEGORY_META,
-} from "./components";
+} from './components/components';
 import {
   saveBacktestResults,
   getAllBacktestResults,
   clearBacktestResults,
-} from "./utils";
-import ScanResultsPanel from "./ScanResultsPanel";
-import BacktestPanel from "./BacktestPanel";
-import RealtimePanel from "./RealtimePanel";
-import AlertToast from "./AlertToast";
-import StrategyInfoDialog from "./StrategyInfoDialog";
-import IndexIndicatorPanel from "./IndexIndicatorPanel";
-import LanguageSwitcher from "./LanguageSwitcher";
+} from './utils/utils';
+import ScanResultsPanel from './features/ScanResultsPanel';
+import BacktestPanel from './features/BacktestPanel';
+import RealtimePanel from './features/RealtimePanel';
+import AlertToast from './components/AlertToast';
+import StrategyInfoDialog from './components/StrategyInfoDialog';
+import IndexIndicatorPanel from './features/IndexIndicatorPanel';
+import LanguageSwitcher from './components/LanguageSwitcher';
 import InstallPrompt from "./components/InstallPrompt";
 
 // ─────────────────────────────────────────────────────────────────────────────

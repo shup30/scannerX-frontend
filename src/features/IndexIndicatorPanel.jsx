@@ -14,8 +14,12 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 import SettingsIcon from "@mui/icons-material/Settings";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import axios from "axios";
-import CandlestickChart from "./CandlestickChart";
-import OptionChainWidget from "./OptionChainWidget";
+import CandlestickChart from './CandlestickChart';
+import OptionChainWidget from './OptionChainWidget';
+import GatedSignalPanel from './GatedSignalPanel';
+import InstitutionalSignalPanel from './InstitutionalSignalPanel';
+import SystemHealthPanel from './SystemHealthPanel';
+import ContextMatrixPanel from './ContextMatrixPanel';
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const CAT_NAMES = { trend: "Trend & Moving Averages", momentum: "Momentum & Oscillators", volatility_volume: "Volatility & Volume", support_resistance: "Support/Resistance & Pivots" };
@@ -684,39 +688,7 @@ export default function IndexIndicatorPanel() {
               </Card>
             </Grid>
             <Grid item xs={12} md={5}>
-              <Card sx={{ ...glass, background: `linear-gradient(135deg, ${theme.palette.background.paper}, ${gc(data.signal_summary.composite_signal)}11)` }}>
-                <CardContent>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                    <Tooltip title={`Composite Signal combines ${data.signal_summary.counts.BUY + data.signal_summary.counts.NEUTRAL + data.signal_summary.counts.SELL} indicators with weighted scoring.\n\n${data.signal_summary.composite_signal}: ${SIGNAL_TIPS[data.signal_summary.composite_signal] || "Aggregated signal from all indicators"}`} arrow>
-                      <Box sx={{ textAlign: "center", cursor: "help" }}>
-                        <Typography variant="subtitle2" color="text.secondary">COMPOSITE SIGNAL</Typography>
-                        <Typography variant="h4" fontWeight="900" sx={{ color: gc(data.signal_summary.composite_signal), letterSpacing: 2 }}>{data.signal_summary.composite_signal}</Typography>
-                      </Box>
-                    </Tooltip>
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                      <Tooltip title={`${data.signal_summary.counts.BUY} indicators showing BUY signal`} arrow><Chip size="small" label={`🟢 ${data.signal_summary.counts.BUY}`} color="success" variant="outlined" sx={{ cursor: "help" }} /></Tooltip>
-                      <Tooltip title={`${data.signal_summary.counts.NEUTRAL} indicators showing NEUTRAL signal`} arrow><Chip size="small" label={`⚪ ${data.signal_summary.counts.NEUTRAL}`} sx={{ cursor: "help" }} /></Tooltip>
-                      <Tooltip title={`${data.signal_summary.counts.SELL} indicators showing SELL signal`} arrow><Chip size="small" label={`🔴 ${data.signal_summary.counts.SELL}`} color="error" variant="outlined" sx={{ cursor: "help" }} /></Tooltip>
-                    </Box>
-                  </Box>
-                  <Tooltip title={`Weighted Score: ${ws > 0 ? "+" : ""}${ws.toFixed(3)}\nRanges from -1.0 (Strong Sell) to +1.0 (Strong Buy)\nKey indicators (VWAP, EMA200, Supertrend) have higher weights`} arrow>
-                    <Typography variant="caption" color="text.secondary" sx={{ cursor: "help" }}>Weighted Score: {ws > 0 ? "+" : ""}{ws.toFixed(3)}</Typography>
-                  </Tooltip>
-                  <Box sx={{ position: "relative", height: 12, borderRadius: 6, overflow: "hidden", mt: 0.5, background: "rgba(0,0,0,0.15)" }}>
-                    <Box sx={{
-                      position: "absolute", left: "50%", top: 0, height: "100%", width: `${Math.abs(ws) * 50}%`, borderRadius: 6,
-                      transform: ws >= 0 ? "none" : "translateX(-100%)",
-                      background: ws >= 0 ? "linear-gradient(90deg,#ccc,#4caf50)" : "linear-gradient(90deg,#f44336,#ccc)", transition: "width 0.8s"
-                    }} />
-                    <Box sx={{ position: "absolute", left: "50%", top: 0, width: 2, height: "100%", bgcolor: "text.secondary", opacity: 0.5 }} />
-                    <Typography variant="caption" sx={{ position: "absolute", top: -1, left: `${50 + ws * 50}%`, transform: "translateX(-50%)", fontSize: "0.5rem", fontWeight: "bold", color: ws > 0 ? "success.main" : ws < 0 ? "error.main" : "text.disabled", whiteSpace: "nowrap" }}>{ws > 0 ? "+" : ""}{ws.toFixed(2)}</Typography>
-                  </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}>
-                    <Typography variant="caption" color="error.main">-1.0 BEARISH</Typography>
-                    <Typography variant="caption" color="success.main">BULLISH +1.0</Typography>
-                  </Box>
-                </CardContent>
-              </Card>
+              <GatedSignalPanel signalSummary={data.signal_summary} regimeDetail={data.regime_detail} glass={glass} />
             </Grid>
             <Grid item xs={12} md={4}>
               <Card sx={{ ...glass, height: "100%" }}>
@@ -734,6 +706,28 @@ export default function IndexIndicatorPanel() {
               </Card>
             </Grid>
           </Grid>
+
+          {/* Institutional Signal Panel */}
+          {data.institutional_signal && data.institutional_signal.components && (
+            <InstitutionalSignalPanel institutionalSignal={data.institutional_signal} glass={glass} />
+          )}
+
+          {/* New System Health Panel */}
+          {data.system_health && data.throughput_status && (
+            <SystemHealthPanel systemHealth={data.system_health} throughputStatus={data.throughput_status} glass={glass} />
+          )}
+
+          {/* New Context Matrix Panel */}
+          {data.day_character && data.session_context && data.expiry_context && data.dealer_context && (
+            <ContextMatrixPanel
+              dayCharacter={data.day_character}
+              sessionContext={data.session_context}
+              expiryContext={data.expiry_context}
+              dealerContext={data.dealer_context}
+              liquidityContext={data.liquidity_context}
+              glass={glass}
+            />
+          )}
 
           {/* Candlestick Chart */}
           {data.candles && data.candles.length > 0 && (

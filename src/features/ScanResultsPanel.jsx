@@ -27,8 +27,8 @@ import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
 } from "@mui/icons-material";
-import { StatCard, MonoLabel, DirectionBadge } from "./components";
-import { fmtCondition } from "./utils";
+import { StatCard, MonoLabel, DirectionBadge } from '../components/components';
+import { fmtCondition } from '../utils/utils';
 
 export default function ScanResultsPanel({
   scanResults,

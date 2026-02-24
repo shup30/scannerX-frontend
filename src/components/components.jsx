@@ -23,7 +23,7 @@ import {
   TrendingDown,
 } from "@mui/icons-material";
 import BoltIcon from "@mui/icons-material/Bolt";
-import { getBacktestResults, formatTimeAgo } from "./utils";
+import { getBacktestResults, formatTimeAgo } from '../utils/utils';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CATEGORY METADATA

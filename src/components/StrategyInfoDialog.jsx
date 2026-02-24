@@ -12,7 +12,7 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { CheckCircle as CheckCircleIcon } from "@mui/icons-material";
-import { MonoLabel, DirectionBadge, CategoryBadge } from "./components";
+import { MonoLabel, DirectionBadge, CategoryBadge } from './components';
 
 export default function StrategyInfoDialog({
   open,

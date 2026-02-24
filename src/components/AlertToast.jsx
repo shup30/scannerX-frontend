@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Typography, IconButton, Slide, useTheme, useMediaQuery } from "@mui/material";
 import { Cancel as CancelIcon } from "@mui/icons-material";
-import { formatTs } from "./utils";
+import { formatTs } from '../utils/utils';
 
 export default function AlertToast({ alert, onClose }) {
   const theme = useTheme();

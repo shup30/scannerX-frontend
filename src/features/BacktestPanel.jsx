@@ -24,8 +24,8 @@ import {
   TrendingDown as TrendingDownIcon,
   Timeline as TimelineIcon,
 } from "@mui/icons-material";
-import { StatCard, MonoLabel, DirectionBadge } from "./components";
-import { formatTs } from "./utils";
+import { StatCard, MonoLabel, DirectionBadge } from '../components/components';
+import { formatTs } from '../utils/utils';
 
 export default function BacktestPanel({ backtestResults }) {
   const theme = useTheme();

@@ -127,7 +127,7 @@ export default function OptionChainWidget({ selectedIndex }) {
         );
     }
 
-    const { current, comparisons, signals, composite_signal, oi_based_levels, strike_data, expiry } = data;
+    const { current, comparisons, signals, composite_signal, oi_based_levels, strike_data, expiry, market_intelligence } = data;
     if (!current) return null;
 
     const maxOI = Math.max(
@@ -154,6 +154,15 @@ export default function OptionChainWidget({ selectedIndex }) {
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Typography variant="subtitle1" fontWeight="bold">🔗 Option Chain Analysis</Typography>
                         <Chip size="small" label={composite_signal} color={BIAS_COLOR[composite_signal] || "default"} sx={{ fontWeight: "bold" }} />
+                        {market_intelligence?.structure && (
+                            <Chip
+                                size="small"
+                                label={market_intelligence.structure.replace("_", " ")}
+                                color={market_intelligence.structure.includes("BULLISH") ? "success" : market_intelligence.structure.includes("BEARISH") ? "error" : "primary"}
+                                variant="outlined"
+                                sx={{ fontWeight: "bold", borderWidth: 2 }}
+                            />
+                        )}
                         {expiry && <Chip size="small" label={`Exp: ${expiry}`} variant="outlined" sx={{ fontSize: "0.55rem", height: 20 }} />}
                     </Box>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -165,6 +174,22 @@ export default function OptionChainWidget({ selectedIndex }) {
                         </Tooltip>
                     </Box>
                 </Box>
+
+                {/* ── Institutional Edge Alerts ── */}
+                {market_intelligence?.setup && market_intelligence.setup !== "NONE" && (
+                    <Box sx={{ mb: 2 }}>
+                        <Alert
+                            severity={market_intelligence.setup.includes("BULL_TRAP") || market_intelligence.setup.includes("RESISTANCE") ? "error" : "success"}
+                            variant="filled"
+                            sx={{
+                                py: 0,
+                                '& .MuiAlert-message': { py: 1, fontSize: "0.75rem", fontWeight: "bold" }
+                            }}
+                        >
+                            INSTITUTIONAL SETUP DETECTED: {market_intelligence.setup.replace(/_/g, " ")}
+                        </Alert>
+                    </Box>
+                )}
 
                 {/* ── Key Metrics Row ── */}
                 <Grid container spacing={1.5} sx={{ mb: 2 }}>

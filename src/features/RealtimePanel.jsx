@@ -34,8 +34,8 @@ import {
   Sensors as SensorsIcon,
   SensorsOff as SensorsOffIcon,
 } from "@mui/icons-material";
-import { MonoLabel, DirectionBadge } from "./components";
-import { formatTs } from "./utils";
+import { MonoLabel, DirectionBadge } from '../components/components';
+import { formatTs } from '../utils/utils';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
