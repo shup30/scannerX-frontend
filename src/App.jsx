@@ -86,6 +86,7 @@ import RealtimePanel from './features/RealtimePanel';
 import AlertToast from './components/AlertToast';
 import StrategyInfoDialog from './components/StrategyInfoDialog';
 import IndexIndicatorPanel from './features/IndexIndicatorPanel';
+import DashboardV4 from './features/DashboardV4';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import InstallPrompt from "./components/InstallPrompt";
 import { Switch, FormControlLabel } from '@mui/material';
@@ -928,9 +929,9 @@ export default function App() {
                 selected={mainTab === 1}
               >
                 <ListItemIcon>
-                  <BoltIcon />
+                  <SpeedIcon />
                 </ListItemIcon>
-                <ListItemText primary={t('drawer.liveScanner')} />
+                <ListItemText primary="V4 Engine" />
               </ListItem>
               <ListItem
                 button
@@ -941,9 +942,9 @@ export default function App() {
                 selected={mainTab === 2}
               >
                 <ListItemIcon>
-                  <TimelineIcon />
+                  <BoltIcon />
                 </ListItemIcon>
-                <ListItemText primary={t('drawer.backtest')} />
+                <ListItemText primary={t('drawer.liveScanner')} />
               </ListItem>
               <ListItem
                 button
@@ -952,6 +953,19 @@ export default function App() {
                   setDrawerOpen(false);
                 }}
                 selected={mainTab === 3}
+              >
+                <ListItemIcon>
+                  <TimelineIcon />
+                </ListItemIcon>
+                <ListItemText primary={t('drawer.backtest')} />
+              </ListItem>
+              <ListItem
+                button
+                onClick={() => {
+                  setMainTab(4);
+                  setDrawerOpen(false);
+                }}
+                selected={mainTab === 4}
               >
                 <ListItemIcon>
                   <Badge
@@ -1138,6 +1152,11 @@ export default function App() {
                 label={isMobile ? t('tabs.indexSignalsShort') : t('tabs.indexSignals')}
               />
               <Tab
+                icon={<SpeedIcon sx={{ fontSize: isMobile ? 16 : 18 }} />}
+                iconPosition="start"
+                label={isMobile ? "V4 Engine" : "V4 AI Engine"}
+              />
+              <Tab
                 icon={<BoltIcon sx={{ fontSize: isMobile ? 16 : 18 }} />}
                 iconPosition="start"
                 label={isMobile ? t('tabs.liveScannerShort') : t('tabs.liveScanner')}
@@ -1170,7 +1189,7 @@ export default function App() {
           </Card>
 
           {/* ── Strategy Selection ── */}
-          {mainTab !== 0 && (
+          {(mainTab !== 0 && mainTab !== 1) && (
             <Card sx={{ mb: 3 }}>
               <CardContent sx={{ p: isMobile ? 2 : 2.5 }}>
                 {/* Header */}
@@ -1283,7 +1302,7 @@ export default function App() {
                           (t) => t.strategy === key && t.is_running,
                         )}
                         onClick={() => {
-                          if (mainTab === 3) {
+                          if (mainTab === 4) {
                             // Multi-select for Auto-Scan
                             setSelectedStrategies((prev) =>
                               prev.includes(key)
@@ -1367,7 +1386,7 @@ export default function App() {
                     </FormControl>
                   </Grid>
 
-                  {mainTab === 1 && (
+                  {mainTab === 2 && (
                     <Grid item xs={12} md={4}>
                       <FormControl fullWidth size="small">
                         <InputLabel>Lookback Period</InputLabel>
@@ -1394,7 +1413,7 @@ export default function App() {
                       </FormControl>
                     </Grid>
                   )}
-                  {mainTab === 2 && (
+                  {mainTab === 3 && (
                     <Grid item xs={12} md={4}>
                       <FormControl fullWidth size="small">
                         <InputLabel>Backtest Period</InputLabel>
@@ -1417,7 +1436,7 @@ export default function App() {
                     </Grid>
                   )}
 
-                  {(mainTab === 1 || mainTab === 2) && (
+                  {(mainTab === 2 || mainTab === 3) && (
                     <Grid item xs={12} md={4}>
                       <Box
                         sx={{
@@ -1427,7 +1446,7 @@ export default function App() {
                           alignItems: "center",
                         }}
                       >
-                        {mainTab === 1 ? (
+                        {mainTab === 2 ? (
                           <Button
                             fullWidth
                             variant="contained"
@@ -1532,7 +1551,8 @@ export default function App() {
 
           {/* ── Tab Content ── */}
           {mainTab === 0 && <IndexIndicatorPanel llmEnabled={llmEnabled} llmLoading={llmLoading} />}
-          {mainTab === 1 && (
+          {mainTab === 1 && <DashboardV4 />}
+          {mainTab === 2 && (
             <ScanResultsPanel
               scanResults={scanResults}
               selectedStrategy={selectedStrategies[0]}
@@ -1541,8 +1561,8 @@ export default function App() {
               intradayDays={intradayDays}
             />
           )}
-          {mainTab === 2 && <BacktestPanel backtestResults={backtestResults} />}
-          {mainTab === 3 && (
+          {mainTab === 3 && <BacktestPanel backtestResults={backtestResults} />}
+          {mainTab === 4 && (
             <RealtimePanel
               selectedStrategies={selectedStrategies}
               selectedStockList={selectedStockList}
