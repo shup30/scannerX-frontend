@@ -66,6 +66,7 @@ import {
 } from "@mui/icons-material";
 
 import BoltIcon from "@mui/icons-material/Bolt";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import { useTranslation } from "react-i18next";
 
 import { getTheme } from './styles/theme';
@@ -87,6 +88,7 @@ import AlertToast from './components/AlertToast';
 import StrategyInfoDialog from './components/StrategyInfoDialog';
 import IndexIndicatorPanel from './features/IndexIndicatorPanel';
 import DashboardV4 from './features/DashboardV4';
+import V5Panel from './features/V5Panel';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import InstallPrompt from "./components/InstallPrompt";
 import { Switch, FormControlLabel } from '@mui/material';
@@ -982,6 +984,19 @@ export default function App() {
                 </ListItemIcon>
                 <ListItemText primary={t('drawer.autoScan')} />
               </ListItem>
+              <ListItem
+                button
+                onClick={() => {
+                  setMainTab(5);
+                  setDrawerOpen(false);
+                }}
+                selected={mainTab === 5}
+              >
+                <ListItemIcon>
+                  <AutoFixHighIcon />
+                </ListItemIcon>
+                <ListItemText primary="V5 Anticipatory" />
+              </ListItem>
             </List>
             <Divider sx={{ my: 2 }} />
             <Box sx={{ px: 2 }}>
@@ -1185,11 +1200,16 @@ export default function App() {
                 iconPosition="start"
                 label={isMobile ? t('tabs.autoScanShort') : t('tabs.autoScan')}
               />
+              <Tab
+                icon={<AutoFixHighIcon sx={{ fontSize: isMobile ? 16 : 18 }} />}
+                iconPosition="start"
+                label={isMobile ? "V5" : "V5 Anticipatory"}
+              />
             </Tabs>
           </Card>
 
           {/* ── Strategy Selection ── */}
-          {(mainTab !== 0 && mainTab !== 1) && (
+          {(mainTab !== 0 && mainTab !== 1 && mainTab !== 5) && (
             <Card sx={{ mb: 3 }}>
               <CardContent sx={{ p: isMobile ? 2 : 2.5 }}>
                 {/* Header */}
@@ -1579,6 +1599,7 @@ export default function App() {
               }}
             />
           )}
+          {mainTab === 5 && <V5Panel />}
         </Container>
 
         {/* Strategy Info Dialog */}
