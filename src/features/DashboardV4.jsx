@@ -1,61 +1,95 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Box, Typography, Grid, Paper, Chip, LinearProgress, Divider,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    IconButton, Tooltip, Zoom
+    IconButton, Tooltip, Zoom, CircularProgress, Alert
 } from '@mui/material';
 import {
     TrendingUp, TrendingDown, ShowChart, WarningAmber,
     CheckCircle, RadioButtonChecked, AccountBalance, Speed
 } from '@mui/icons-material';
+import axios from 'axios';
 
-// --- MOCK V4 METRICS FIXTURE ---
-const MOCK_FIXTURE = {
-    signal_output: {
-        action: "BUY",
-        confidence: "HIGH",
-        score: 0.85,
-        pillars_met: ["MOMENTUM", "VOLUME_CONFIRMATION", "OFI_EXPANSION"],
-        red_flags: [],
-        suggested_sl: 104.2,
-        suggested_target: 350.5,
-        rr_ratio: 2.5,
-        day_quality: "ACTIVE_DAY",
-        day_quality_score: 0.82,
-        reasoning_text: "High alignment across momentum and options data with robust day quality."
-    },
-    micro_adaptation: {
-        session_character_score: 0.75,
-        weights: {
-            trend: 0.35,
-            vwap_sr: 0.20,
-            momentum: 0.30,
-            options: 0.15
-        }
-    },
-    heavy_hitters: {
-        flag: true,
-        ticker: "HDFCBANK",
-        volume_ratio: 4.2
-    },
-    ofi_delta: {
-        direction: "BUY",
-        delta: 0.68
-    },
-    pcr_veto: {
-        veto_active: false,
-        velocity: 1.5,
-        writer_bias: "CALL_UNWIND"
-    },
-    expiry_regime: {
-        phase: "MID_CYCLE",
-        dealer_bias: -0.1
-    }
-};
+const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export default function DashboardV4() {
-    const [data, setData] = useState(MOCK_FIXTURE);
-    const [loading, setLoading] = useState(false);
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [lastRefreshed, setLastRefreshed] = useState(null);
+
+    const fetchData = useCallback(async () => {
+        setLoading(true); setError(null);
+        try {
+            const res = await axios.get(`${API}/api/index/v4/analyze`, { params: { index: "nifty", interval: "5", days: 5 } });
+            if (res.data?.success) {
+                setData(res.data.data);
+                setLastRefreshed(new Date().toLocaleTimeString());
+            } else {
+                setError("Failed to fetch V4 data.");
+            }
+        } catch (err) {
+            setError(err.response?.data?.detail || err.message || "Network error");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+        const iv = setInterval(fetchData, 60000);
+        return () => clearInterval(iv);
+    }, [fetchData]);
+
+    if (error) {
+        return <Box sx={{ p: 3 }}><Alert severity="error">{error}</Alert></Box>;
+    }
+
+    if (!data) {
+        return (
+            <Box sx={{ p: 5, display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+                <CircularProgress color="primary" />
+                <Typography sx={{ ml: 2, color: 'text.secondary' }}>Initializing AI V4 Engine...</Typography>
+            </Box>
+        );
+    }
+
+    // Mapping real data to the UI structures
+    const gated = data.signal_summary?.gated_signal || {};
+    const action = gated.action || "NEUTRAL";
+    const confidence = gated.confidence || "MEDIUM";
+    const targetPrice = gated.target_price || "N/A";
+    const stopLoss = gated.stop_loss || "N/A";
+    const rrRatio = "N/A"; // Could compute if entry is known
+    const reasoningText = gated.reason || "Neutral market state.";
+
+    const dayQualityScore = data.day_character?.day_quality_score || 0.5;
+    const dayQuality = data.day_character?.day_quality || "UNKNOWN";
+
+    const sessionCharScore = data.session_context?.session_risk_modifier || 0.5;
+    const regime = data.market_regime || "TRANSITIONING";
+
+    const ofiDelta = data.liquidity_context?.ofi_delta || 0;
+    const ofiDir = ofiDelta > 0 ? "BUY" : ofiDelta < 0 ? "SELL" : "NEUTRAL";
+
+    const instScorer = data.institutional_signal || {};
+    const pcrVetoActive = instScorer.veto?.active || false;
+    const writerBias = instScorer.veto?.reason || "CLEARED";
+    const pillarsMet = instScorer.components ? Object.entries(instScorer.components)
+        .filter(([k, v]) => v.action && v.action !== "NEUTRAL")
+        .map(([k, v]) => `${k.toUpperCase()} (${v.action})`) : [];
+
+    const flowCtx = data.flow_context || {};
+    const heavyHitterFlag = flowCtx.heavy_hitter_detected || false;
+    const hhTicker = heavyHitterFlag ? Object.keys(flowCtx.notable_flows || {})[0] : "";
+
+    // Fallback dictionary for dynamic micro-weights based on regime
+    const microWeights = {
+        trend: regime === "TRENDING" ? 0.45 : 0.20,
+        vwap_sr: regime === "RANGING" ? 0.40 : 0.20,
+        momentum: 0.25,
+        options: 0.10
+    };
 
     // Bloomberg Terminal Dark Theme palette overrides
     const tvColors = {
@@ -118,30 +152,30 @@ export default function DashboardV4() {
                                 <Grid item xs={6} sm={3}>
                                     <TerminalValue
                                         label="ACTION"
-                                        value={data.signal_output.action}
-                                        valColor={data.signal_output.action === 'BUY' ? tvColors.green : tvColors.red}
+                                        value={action}
+                                        valColor={action === 'BUY' ? tvColors.green : action === 'SELL' ? tvColors.red : tvColors.text}
                                     />
                                 </Grid>
                                 <Grid item xs={6} sm={3}>
-                                    <TerminalValue label="CONFIDENCE" value={data.signal_output.confidence} valColor={tvColors.accentOrange} />
+                                    <TerminalValue label="CONFIDENCE" value={confidence} valColor={tvColors.accentOrange} />
                                 </Grid>
                                 <Grid item xs={6} sm={3}>
-                                    <TerminalValue label="EST. TARGET" value={data.signal_output.suggested_target} />
+                                    <TerminalValue label="EST. TARGET" value={targetPrice} />
                                 </Grid>
                                 <Grid item xs={6} sm={3}>
-                                    <TerminalValue label="STOP LOSS" value={data.signal_output.suggested_sl} sub={`RR: ${data.signal_output.rr_ratio}`} />
+                                    <TerminalValue label="STOP LOSS" value={stopLoss} sub={`RR: ${rrRatio}`} />
                                 </Grid>
                             </Grid>
 
                             <Box sx={{ mt: 3 }}>
                                 <Typography sx={{ color: tvColors.textDim, fontSize: '0.65rem', fontFamily: '"JetBrains Mono", monospace', mb: 1 }}>STRUCTURED REASONING</Typography>
                                 <Typography sx={{ fontSize: '0.85rem', color: tvColors.text, lineHeight: 1.5, fontFamily: '"JetBrains Mono", monospace' }}>
-                                    {data.signal_output.reasoning_text}
+                                    {reasoningText}
                                 </Typography>
-                                <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                                    {data.signal_output.pillars_met.map(p => (
+                                <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                    {pillarsMet.length > 0 ? pillarsMet.map(p => (
                                         <Chip key={p} label={p} size="small" sx={{ bgcolor: 'rgba(0,200,83,0.1)', color: tvColors.green, border: `1px solid ${tvColors.green}40`, fontSize: '0.6rem', fontFamily: '"JetBrains Mono", monospace' }} />
-                                    ))}
+                                    )) : <Typography variant="caption" color="text.disabled">No Pillars Aligned</Typography>}
                                 </Box>
                             </Box>
                         </Paper>
@@ -152,18 +186,18 @@ export default function DashboardV4() {
                         <Paper sx={{ p: 3, bgcolor: tvColors.panelBg, height: '100%', borderRadius: 1, border: `1px solid ${tvColors.grid}` }}>
                             <CardHeader title="Day Quality" />
                             <Box sx={{ textAlign: 'center', my: 2 }}>
-                                <Speed sx={{ fontSize: 64, color: data.signal_output.day_quality_score > 0.6 ? tvColors.green : tvColors.accentOrange, mb: 1 }} />
+                                <Speed sx={{ fontSize: 64, color: dayQualityScore > 0.6 ? tvColors.green : tvColors.accentOrange, mb: 1 }} />
                                 <Typography variant="h4" sx={{ fontWeight: 900, fontFamily: '"JetBrains Mono", monospace' }}>
-                                    {(data.signal_output.day_quality_score * 100).toFixed(0)}
+                                    {(dayQualityScore * 100).toFixed(0)}
                                 </Typography>
                                 <Typography sx={{ color: tvColors.textDim, fontSize: '0.7rem', fontFamily: '"JetBrains Mono", monospace', letterSpacing: 1 }}>
-                                    {data.signal_output.day_quality}
+                                    {dayQuality}
                                 </Typography>
                             </Box>
                             <Box sx={{ px: 2 }}>
                                 <LinearProgress
                                     variant="determinate"
-                                    value={data.signal_output.day_quality_score * 100}
+                                    value={dayQualityScore * 100}
                                     sx={{
                                         height: 8,
                                         borderRadius: 4,
@@ -179,9 +213,9 @@ export default function DashboardV4() {
                     <Grid item xs={12} md={4}>
                         <Paper sx={{ p: 2, bgcolor: tvColors.panelBg, height: '100%', borderRadius: 1, border: `1px solid ${tvColors.grid}` }}>
                             <CardHeader title="Micro-Adaptation" />
-                            <TerminalValue label="SESSION CHARACTER" value={`${(data.micro_adaptation.session_character_score * 100).toFixed(0)}%`} valColor={tvColors.green} />
+                            <TerminalValue label="SESSION CHARACTER" value={`${(sessionCharScore * 100).toFixed(0)}%`} valColor={tvColors.green} />
                             <Box sx={{ mt: 2 }}>
-                                {Object.entries(data.micro_adaptation.weights).map(([k, v]) => (
+                                {Object.entries(microWeights).map(([k, v]) => (
                                     <Box key={k} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                         <Typography sx={{ flex: 1, fontSize: '0.65rem', color: tvColors.textDim, fontFamily: '"JetBrains Mono", monospace' }}>
                                             {k.toUpperCase()}
@@ -204,16 +238,16 @@ export default function DashboardV4() {
                             <CardHeader title="Flow Dynamics" />
                             <Grid container spacing={2}>
                                 <Grid item xs={6}>
-                                    <TerminalValue label="OFI DELTA" value={data.ofi_delta.delta} valColor={data.ofi_delta.direction === 'BUY' ? tvColors.green : tvColors.red} />
+                                    <TerminalValue label="OFI DELTA" value={ofiDelta.toFixed(3)} valColor={ofiDir === 'BUY' ? tvColors.green : ofiDir === 'SELL' ? tvColors.red : tvColors.textDim} />
                                 </Grid>
                                 <Grid item xs={6}>
-                                    <TerminalValue label="HEAVY HITTER" value={data.heavy_hitters.flag ? "DETECTED" : "NONE"} valColor={data.heavy_hitters.flag ? tvColors.accentOrange : tvColors.textDim} sub={data.heavy_hitters.flag ? `${data.heavy_hitters.ticker} (${data.heavy_hitters.volume_ratio}x)` : ''} />
+                                    <TerminalValue label="HEAVY HITTER" value={heavyHitterFlag ? "DETECTED" : "NONE"} valColor={heavyHitterFlag ? tvColors.accentOrange : tvColors.textDim} sub={heavyHitterFlag ? `${hhTicker}` : ''} />
                                 </Grid>
                                 <Grid item xs={6}>
-                                    <TerminalValue label="PCR VETO" value={data.pcr_veto.veto_active ? "ACTIVE" : "CLEARED"} valColor={data.pcr_veto.veto_active ? tvColors.red : tvColors.textDim} sub={`Bias: ${data.pcr_veto.writer_bias}`} />
+                                    <TerminalValue label="PCR VETO" value={pcrVetoActive ? "ACTIVE" : "CLEARED"} valColor={pcrVetoActive ? tvColors.red : tvColors.textDim} sub={`Bias: ${writerBias}`} />
                                 </Grid>
                                 <Grid item xs={6}>
-                                    <TerminalValue label="EXPIRY PHASE" value={data.expiry_regime.phase} valColor={tvColors.text} sub={`Dealer Bias: ${data.expiry_regime.dealer_bias}`} />
+                                    <TerminalValue label="EXPIRY PHASE" value={data.expiry_context?.phase || "UNKNOWN"} valColor={tvColors.text} sub={`Dealer Bias: ${data.expiry_context?.dealer_bias || 'N/A'}`} />
                                 </Grid>
                             </Grid>
                         </Paper>
