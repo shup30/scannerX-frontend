@@ -4,6 +4,7 @@ import {
   IconButton, Tooltip, useTheme, Accordion, AccordionSummary,
   AccordionDetails, Alert, Switch, FormControlLabel,
   Select, MenuItem, FormControl, InputLabel, Skeleton, LinearProgress,
+  Button,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -547,7 +548,13 @@ export default function IndexIndicatorPanel({ llmEnabled, llmLoading }) {
         axios.get(`${API}/api/market/global-context`),
       ]);
       const mainData = mainRes.status === "fulfilled" ? mainRes.value.data?.data : null;
-      if (!mainData) { setError("Failed to load indicator data"); return; }
+      if (!mainData) {
+        const errDetail = mainRes.reason?.response?.data?.detail
+          || mainRes.reason?.message
+          || "Failed to load indicator data";
+        setError(errDetail);
+        return;
+      }
       const constituentData = constituentRes.status === "fulfilled" ? constituentRes.value.data?.data : null;
       const globalData = globalRes.status === "fulfilled" ? globalRes.value.data?.data : null;
       setData({ ...mainData, constituent_analysis: constituentData, global_context: globalData });
@@ -557,6 +564,20 @@ export default function IndexIndicatorPanel({ llmEnabled, llmLoading }) {
   }, [selectedIndex]);
 
   useEffect(() => { fetchData(); const iv = setInterval(fetchData, 60000); return () => clearInterval(iv); }, [fetchData]);
+
+  const [renewLoading, setRenewLoading] = useState(false);
+  const renewAuth = useCallback(async () => {
+    setRenewLoading(true);
+    try {
+      await axios.post(`${API}/api/auth/renew`);
+      setError(null);
+      fetchData();
+    } catch (e) {
+      setError(e.response?.data?.detail || "Token renewal failed — check server logs");
+    } finally {
+      setRenewLoading(false);
+    }
+  }, [fetchData]);
 
   // Per-TF prediction tracking with race condition fix
   useEffect(() => {
@@ -634,7 +655,21 @@ export default function IndexIndicatorPanel({ llmEnabled, llmLoading }) {
         </Box>
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+      {error && (
+        error === "Dhan Bridge not initialized" ? (
+          <Alert severity="warning" sx={{ mb: 3 }}
+            action={
+              <Button color="inherit" size="small" onClick={renewAuth} disabled={renewLoading}>
+                {renewLoading ? "Renewing…" : "Renew Auth"}
+              </Button>
+            }
+          >
+            Dhan authentication not active — the server started without a valid token. Click <strong>Renew Auth</strong> to reconnect, or restart the server after updating your credentials.
+          </Alert>
+        ) : (
+          <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
+        )
+      )}
 
       {/* Skeleton loading for initial load */}
       {loading && !data && (
